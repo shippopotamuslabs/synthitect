@@ -71,9 +71,9 @@ class TestFileManager:
         Note: Templates are bundled with the package, NOT in base_dir.
         This test verifies actual bundled template reading.
         """
-        result = fm.read_template("probe-phase.md")
+        result = fm.read_template("plan-phase.md")
         assert len(result) > 0
-        assert "Probe" in result or "probe" in result.lower()
+        assert "spec.md" in result or "plan" in result.lower()
 
     # =========================================================================
     # Bundled Template Tests (Critical for Multi-Project Usage)
@@ -96,11 +96,11 @@ class TestFileManager:
 
         # read_template should still work because it uses bundled prompts,
         # not base_dir
-        result = fm.read_template("probe-phase.md")
+        result = fm.read_template("plan-phase.md")
 
         # Should return actual bundled template content
         assert len(result) > 0
-        assert "Probe Sub-Agent" in result or "probe" in result.lower()
+        assert "Plan Sub-Agent" in result or "plan" in result.lower()
 
     def test_read_template_works_with_different_base_dir(self):
         """Test that read_template works when base_dir is set to a different project.
@@ -108,7 +108,6 @@ class TestFileManager:
         Simulates the real-world scenario where SYNTHIECT_BASE_DIR=/path/to/projectA
         but prompts are bundled with the MCP server package.
         """
-        # Use /tmp as a "different project" that has no prompts
         with tempfile.TemporaryDirectory() as temp_dir:
             other_project = Path(temp_dir) / "other_project"
             other_project.mkdir()
@@ -116,7 +115,7 @@ class TestFileManager:
             fm = FileManager(str(other_project))
 
             # This should work - templates come from package, not base_dir
-            template = fm.read_template("discovery-phase.md")
+            template = fm.read_template("plan-phase.md")
 
             assert len(template) > 0
             assert "{{" in template  # Template has variables
@@ -133,12 +132,9 @@ class TestFileManager:
     def test_all_bundled_templates_exist(self):
         """Test that all expected bundled templates actually exist."""
         expected_templates = [
-            "probe-phase.md",
-            "discovery-phase.md",
-            "spec-phase.md",
+            "plan-phase.md",
             "tdd-red-phase.md",
             "implement-phase.md",
-            "audit-phase.md",
         ]
 
         fm = FileManager("/tmp")  # base_dir doesn't matter for bundled templates
@@ -154,9 +150,7 @@ class TestFileManager:
         """Test that templates contain expected placeholders for phase completion."""
         fm = FileManager("/tmp")
 
-        # Each phase template should have ticket_id placeholder
-        for template_name in ["discovery-phase.md", "spec-phase.md", "tdd-red-phase.md",
-                              "implement-phase.md", "audit-phase.md"]:
+        for template_name in ["plan-phase.md", "tdd-red-phase.md", "implement-phase.md"]:
             content = fm.read_template(template_name)
             assert "{{ ticket_id }}" in content or "{{ticket_id}}" in content, \
                 f"Template {template_name} missing ticket_id placeholder"
@@ -213,19 +207,8 @@ class TestFileManager:
         assert result == "Name: "
 
     # =========================================================================
-    # Discovery/Spec Existence Tests
+    # Spec Existence Tests
     # =========================================================================
-
-    def test_ensure_discovery_exists_false(self, fm):
-        """Test discovery check returns False when file doesn't exist."""
-        fm.create_ticket_directory("TEST-001")
-        assert fm.ensure_discovery_exists("TEST-001") is False
-
-    def test_ensure_discovery_exists_true(self, fm):
-        """Test discovery check returns True when file exists."""
-        fm.create_ticket_directory("TEST-001")
-        (fm.base_dir / "plans" / "TEST-001" / "discovery.md").write_text("# Discovery")
-        assert fm.ensure_discovery_exists("TEST-001") is True
 
     def test_ensure_spec_exists_false_missing_spec(self, fm):
         """Test spec check returns False when spec.md is missing."""
@@ -264,16 +247,16 @@ class TestFileManager:
     def test_set_phase_state_completed(self, fm):
         """Test setting a phase as completed."""
         fm.create_ticket_directory("TEST-001")
-        state = fm.set_phase_state("TEST-001", "discovery", completed=True)
-        assert "discovery" in state["completed_phases"]
+        state = fm.set_phase_state("TEST-001", "plan", completed=True)
+        assert "plan" in state["completed_phases"]
         assert state["current_phase"] is None
 
     def test_set_phase_state_in_progress(self, fm):
         """Test setting a phase as in-progress."""
         fm.create_ticket_directory("TEST-001")
-        state = fm.set_phase_state("TEST-001", "spec", completed=False)
-        assert state["current_phase"] == "spec"
-        assert "spec" not in state["completed_phases"]
+        state = fm.set_phase_state("TEST-001", "tdd_red", completed=False)
+        assert state["current_phase"] == "tdd_red"
+        assert "tdd_red" not in state["completed_phases"]
 
     def test_set_phase_state_invalid_phase(self, fm):
         """Test that setting an invalid phase raises ValueError."""
@@ -285,21 +268,21 @@ class TestFileManager:
     def test_set_phase_state_idempotent(self, fm):
         """Test that setting same phase twice doesn't duplicate."""
         fm.create_ticket_directory("TEST-001")
-        fm.set_phase_state("TEST-001", "discovery", completed=True)
-        fm.set_phase_state("TEST-001", "discovery", completed=True)
+        fm.set_phase_state("TEST-001", "plan", completed=True)
+        fm.set_phase_state("TEST-001", "plan", completed=True)
         state = fm.get_phase_state("TEST-001")
-        assert state["completed_phases"].count("discovery") == 1
+        assert state["completed_phases"].count("plan") == 1
 
     def test_check_phase_prerequisite_true(self, fm):
         """Test that prerequisite check returns True when phase is completed."""
         fm.create_ticket_directory("TEST-001")
-        fm.set_phase_state("TEST-001", "discovery", completed=True)
-        assert fm.check_phase_prerequisite("TEST-001", "discovery") is True
+        fm.set_phase_state("TEST-001", "plan", completed=True)
+        assert fm.check_phase_prerequisite("TEST-001", "plan") is True
 
     def test_check_phase_prerequisite_false(self, fm):
         """Test that prerequisite check returns False when phase is not completed."""
         fm.create_ticket_directory("TEST-001")
-        assert fm.check_phase_prerequisite("TEST-001", "discovery") is False
+        assert fm.check_phase_prerequisite("TEST-001", "plan") is False
 
     def test_check_phase_prerequisite_invalid(self, fm):
         """Test that checking invalid phase raises ValueError."""
@@ -311,13 +294,13 @@ class TestFileManager:
         """Test getting current in-progress phase."""
         fm.create_ticket_directory("TEST-001")
         assert fm.get_current_phase("TEST-001") is None
-        fm.set_phase_state("TEST-001", "spec", completed=False)
-        assert fm.get_current_phase("TEST-001") == "spec"
+        fm.set_phase_state("TEST-001", "tdd_red", completed=False)
+        assert fm.get_current_phase("TEST-001") == "tdd_red"
 
     def test_clear_phase_state(self, fm):
         """Test clearing phase state."""
         fm.create_ticket_directory("TEST-001")
-        fm.set_phase_state("TEST-001", "discovery", completed=True)
+        fm.set_phase_state("TEST-001", "plan", completed=True)
         fm.clear_phase_state("TEST-001")
         state = fm.get_phase_state("TEST-001")
         assert state == {"current_phase": None, "completed_phases": []}
@@ -362,23 +345,21 @@ class TestPhaseStatePersistence:
     def test_phase_state_persists(self, fm):
         """Test that phase state is written to disk."""
         fm.create_ticket_directory("TEST-001")
-        fm.set_phase_state("TEST-001", "discovery", completed=True)
+        fm.set_phase_state("TEST-001", "plan", completed=True)
 
-        # Create new FileManager pointing to same directory
         fm2 = FileManager(str(fm.base_dir))
         state = fm2.get_phase_state("TEST-001")
 
-        assert "discovery" in state["completed_phases"]
+        assert "plan" in state["completed_phases"]
 
     def test_phase_state_file_format(self, fm):
         """Test that phase state is stored as valid JSON."""
         fm.create_ticket_directory("TEST-001")
-        fm.set_phase_state("TEST-001", "discovery", completed=True)
-        fm.set_phase_state("TEST-001", "spec", completed=True)
+        fm.set_phase_state("TEST-001", "plan", completed=True)
+        fm.set_phase_state("TEST-001", "tdd_red", completed=True)
 
         state_file = fm.base_dir / "plans" / "TEST-001" / ".phase_state.json"
         content = state_file.read_text()
 
-        # Should be valid JSON
         parsed = json.loads(content)
-        assert parsed["completed_phases"] == ["discovery", "spec"]
+        assert parsed["completed_phases"] == ["plan", "tdd_red"]

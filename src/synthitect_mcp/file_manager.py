@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Optional
 
 # Valid phases in order
-VALID_PHASES = ["discovery", "spec", "tdd_red", "implementation", "audit"]
+VALID_PHASES = ["plan", "tdd_red", "implementation"]
 
 
 class FileManager:
@@ -98,18 +98,6 @@ class FileManager:
             placeholder = f"{{{{ {key} }}}}"
             result = result.replace(placeholder, value)
         return result
-
-    def ensure_discovery_exists(self, ticket_id: str) -> bool:
-        """Check if discovery.md exists for a ticket.
-
-        Args:
-            ticket_id: The ticket identifier.
-
-        Returns:
-            True if discovery.md exists, False otherwise.
-        """
-        discovery_path = self.base_dir / "plans" / ticket_id / "discovery.md"
-        return discovery_path.exists()
 
     def ensure_spec_exists(self, ticket_id: str) -> bool:
         """Check if spec.md and test_spec.md exist for a ticket.
