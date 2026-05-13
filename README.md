@@ -11,15 +11,12 @@ The Synthitect Protocol enforces contract-first development by providing a struc
 ```
 synthitect-protocol/
 ├── prompts/                    # Sub-Agent system prompts
-│   ├── probe-phase.md         # Probe Sub-Agent prompt
-│   ├── discovery-phase.md     # Discovery Synthesizer prompt
-│   ├── spec-phase.md         # Spec Architect prompt
-│   ├── tdd-red-phase.md       # SDET Sub-Agent prompt
-│   ├── implement-phase.md     # Implementation Engineer prompt
-│   └── audit-phase.md        # Principal Auditor prompt
+│   ├── plan-phase.md          # Plan Sub-Agent (spec + test spec)
+│   ├── tdd-red-phase.md       # TDD Red Sub-Agent prompt
+│   └── implement-phase.md     # Implementation Sub-Agent prompt
 ├── src/synthitect_mcp/
 │   ├── __init__.py
-│   ├── server.py             # MCP server with 6 tools
+│   ├── server.py             # MCP server with 3 tools
 │   └── file_manager.py       # File I/O utility
 ├── SKILL.md                   # Orchestrator instructions (MoA Manager)
 ├── pyproject.toml
@@ -48,18 +45,15 @@ synthitect-mcp
 python -m synthitect_mcp
 ```
 
-### MCP Tools (6 tools for MoA architecture)
+### MCP Tools (3 tools)
 
 Each tool returns a **text briefing**. The Orchestrator MUST spawn a sub-agent and pass the briefing as instructions. The MCP server does NOT execute sub-agents.
 
 | Tool | Description |
 |------|-------------|
-| `generate_probe_briefing(ticket_id, layer_name, directory, raw_idea)` | Generates Probe Sub-Agent briefing for parallel discovery |
-| `generate_discovery_briefing(ticket_id, raw_idea, probe_reports)` | Generates Discovery Synthesizer briefing |
-| `generate_spec_briefing(ticket_id, tier)` | Generates Spec Architect briefing |
-| `generate_tdd_red_briefing(ticket_id, tier)` | Generates SDET Sub-Agent briefing |
-| `generate_implementation_briefing(ticket_id, tier)` | Generates Implementation Engineer briefing |
-| `generate_audit_briefing(ticket_id, tier)` | Generates Principal Auditor briefing |
+| `generate_plan_briefing(ticket_id, raw_idea)` | Plan phase: creates `plans/{ticket_id}/`, returns briefing to produce `spec.md` and `test_spec.md` (human approval before TDD Red) |
+| `generate_tdd_red_briefing(ticket_id)` | TDD Red: verifies plan artifacts exist, returns briefing to write failing tests |
+| `generate_implementation_briefing(ticket_id)` | Implementation: after TDD Red completes, returns briefing to make tests pass |
 
 ### Integration with Claude Code
 
@@ -115,102 +109,69 @@ The server communicates over stdio, making it compatible with any MCP client:
 cd /path/to/your/project && python -m synthitect_mcp
 
 # With custom base directory
-SYNTHIECT_BASE_DIR=/path/to/your/project python -m synthitect_mcp
+SYNTHITECT_BASE_DIR=/path/to/your/project python -m synthitect_mcp
 ```
 
 ---
 
 ## Usage Examples
 
-### Example 1: Full CFAW Lifecycle with Claude Code
+### Example 1: Full CFAW lifecycle with Claude Code
 
 ```
 User: /synthitect Add offline-first sync for user preferences
 
-Orchestrator: I'll execute the Synthitect Protocol for this feature.
-             Let me start with Scatter-Gather Discovery.
+Step 1 — Plan
 
-Step 1: Spawn parallel Probe Sub-Agents
+Orchestrator calls:
+  generate_plan_briefing(
+    ticket_id="FEAT-001",
+    raw_idea="Add offline-first sync for user preferences"
+  )
+→ Pass briefing to Plan Sub-Agent; it writes plans/FEAT-001/spec.md and test_spec.md
 
-Orchestrator uses generate_probe_briefing for each layer:
-- generate_probe_briefing(ticket_id="FEAT-001", layer_name="Domain Layer", directory="src/domain/")
-- generate_probe_briefing(ticket_id="FEAT-001", layer_name="Data Layer", directory="src/data/")
-- generate_probe_briefing(ticket_id="FEAT-001", layer_name="Presentation Layer", directory="src/ui/")
+HUMAN GATE: Present spec.md + test_spec.md for approval before TDD Red.
 
-Step 2: Synthesize discovery
+Step 2 — TDD Red
 
-Orchestrator uses generate_discovery_briefing:
-generate_discovery_briefing(
-  ticket_id="FEAT-001",
-  raw_idea="Add offline-first sync for user preferences",
-  probe_reports="[concatenated probe outputs]"
-)
+Orchestrator calls:
+  generate_tdd_red_briefing(ticket_id="FEAT-001")
+→ Pass briefing to TDD Red Sub-Agent; failing tests and stubs as needed
 
-Step 3: Check for clarifying questions
+Step 3 — Implementation
 
-IF discovery.md contains High-Impact Clarifying Questions:
-  → STOP and prompt Architect for answers
-ELSE:
-  → Proceed to Spec phase
-
-Step 4: Generate specs
-
-Orchestrator uses generate_spec_briefing:
-generate_spec_briefing(ticket_id="FEAT-001", tier="Tier 2")
-→ Returns briefing for Orchestrator to give to Spec Architect Sub-Agent
-
-HUMAN GATE: Present spec.md + test_spec.md to Architect for approval
-
-Step 5: TDD Red
-
-Orchestrator uses generate_tdd_red_briefing:
-generate_tdd_red_briefing(ticket_id="FEAT-001", tier="Tier 2")
-→ Returns briefing for Orchestrator to give to SDET Sub-Agent
-
-HUMAN GATE: Architect verifies all tests are RED
-
-Step 6: Implementation
-
-Orchestrator uses generate_implementation_briefing:
-generate_implementation_briefing(ticket_id="FEAT-001", tier="Tier 2")
-→ Returns briefing for Orchestrator to give to Implementation Engineer Sub-Agent
-
-Step 7: Audit
-
-Orchestrator uses generate_audit_briefing:
-generate_audit_briefing(ticket_id="FEAT-001", tier="Tier 2")
-→ Returns briefing for Orchestrator to give to Principal Auditor Sub-Agent
-
-HUMAN GATE: Architect reviews audit verdict and approves merge
+Orchestrator calls:
+  generate_implementation_briefing(ticket_id="FEAT-001")
+→ Pass briefing to Implementation Sub-Agent until the suite is green
 ```
 
-### Example 2: Single-Phase Invocation
+### Example 2: Single-phase invocation
 
 ```javascript
 // In Claude Code, you can invoke individual phases:
 
-// Re-run just the discovery for a new idea
-generate_probe_briefing("FEAT-002", "Domain Layer", "src/domain/", "Add payment processing")
+// Start or refresh the plan for a ticket
+generate_plan_briefing("FEAT-002", "Add payment processing")
 
-// Generate specs after discovery is complete
-generate_spec_briefing("FEAT-002", "Tier 2")
+// After spec.md + test_spec.md exist and are approved
+generate_tdd_red_briefing("FEAT-002")
 
-// Skip to TDD if spec already exists
-generate_tdd_red_briefing("FEAT-002", "Tier 2")
+// After TDD Red is complete
+generate_implementation_briefing("FEAT-002")
 ```
 
-### Example 3: Checking Phase Status
+### Example 3: Checking artifacts
 
 ```bash
-# Discovery artifacts are stored in plans/{ticket_id}/
+# Plan artifacts live under plans/{ticket_id}/
 ls plans/FEAT-001/
-# discovery.md  spec.md  test_spec.md
+# spec.md  test_spec.md  (and .phase_state.json once phases run)
 
-# View the discovery document
-cat plans/FEAT-001/discovery.md
+# View the working spec
+cat plans/FEAT-001/spec.md
 
-# Check if a phase is complete
-test -f plans/FEAT-001/spec.md && echo "Spec complete" || echo "Spec not ready"
+# Check if the plan phase produced both contracts
+test -f plans/FEAT-001/spec.md -a -f plans/FEAT-001/test_spec.md && echo "Plan complete" || echo "Plan not ready"
 ```
 
 ### Example 4: Using with Custom Constitution
@@ -223,49 +184,35 @@ export CONSTITUTION_PATH=/path/to/project/CONSTITUTION.md
 python -m synthitect_mcp
 ```
 
-## CFAW Lifecycle
+## CFAW lifecycle (this MCP)
 
 ```
 /synthitect [idea]
     │
     ▼
 ┌──────────────────────────────────────────────┐
-│  Phase 1: Discovery                          │
-│  generate_discovery_briefing(ticket_id, idea)│
-│  Output: plans/{id}/discovery.md             │
-└──────────────────────────────────────────────┘
-    │
-    ▼
-┌──────────────────────────────────────────────┐
-│  Phase 2: Spec + Test Spec                   │
-│  generate_spec_briefing(ticket_id)           │
-│  Output: plans/{id}/spec.md                  │
+│  Phase 1: Plan                               │
+│  generate_plan_briefing(ticket_id, raw_idea) │
+│  Output: plans/{id}/spec.md                 │
 │          plans/{id}/test_spec.md             │
 └──────────────────────────────────────────────┘
-    │  HUMAN GATE: Architect approval          │
+    │  HUMAN GATE: Approve plan artifacts      │
     ▼
 ┌──────────────────────────────────────────────┐
-│  Phase 3: TDD Red                            │
+│  Phase 2: TDD Red                            │
 │  generate_tdd_red_briefing(ticket_id)        │
-│  Output: Briefing for SDET Sub-Agent         │
-└──────────────────────────────────────────────┘
-    │  HUMAN GATE: Red state verified          │
-    ▼
-┌──────────────────────────────────────────────┐
-│  Phase 4: Implementation                     │
-│  generate_implementation_briefing(ticket_id) │
-│  Output: Briefing for Implementation Engineer│
+│  Output: Briefing for TDD Red Sub-Agent      │
 └──────────────────────────────────────────────┘
     │
     ▼
 ┌──────────────────────────────────────────────┐
-│  Phase 5: Audit                              │
-│  generate_audit_briefing(ticket_id)          │
-│  Output: Briefing for Principal Auditor      │
+│  Phase 3: Implementation                     │
+│  generate_implementation_briefing(ticket_id) │
+│  Output: Briefing for Implementation Sub-Agent│
 └──────────────────────────────────────────────┘
-    │  HUMAN GATE: Merge approval              │
+    │
     ▼
-   MERGE
+   MERGE (your review / CI as usual)
 ```
 
 ## Key Features
@@ -281,9 +228,8 @@ python -m synthitect_mcp
 - Hallucination detection for dependencies
 
 ### Human Gates
-- Architect approval required after Spec phase
-- Red state verification before Implementation
-- Merge approval after Audit
+- User or Architect approval after Plan phase (`spec.md` + `test_spec.md`)
+- TDD Red and Implementation proceed per your orchestration (see `SKILL.md`)
 
 ### Drift Detection
 - File manifest tracking

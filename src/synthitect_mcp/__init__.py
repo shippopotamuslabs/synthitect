@@ -10,16 +10,13 @@ Usage:
     # Run with: python -m synthitect_mcp
 
 Architecture:
-    - server.py: Core MCP server with 6 briefing-generation tools
+    - server.py: Core MCP server with three briefing-generation tools
     - file_manager.py: File I/O utility for plan artifacts
 
 Tools (all return text briefings; Orchestrator must spawn sub-agents):
-    1. generate_probe_briefing(ticket_id, layer_name, directory, raw_idea) -> str
-    2. generate_discovery_briefing(ticket_id, raw_idea, probe_reports) -> str
-    3. generate_spec_briefing(ticket_id, tier) -> str
-    4. generate_tdd_red_briefing(ticket_id, tier) -> str
-    5. generate_implementation_briefing(ticket_id, tier) -> str
-    6. generate_audit_briefing(ticket_id, tier) -> str
+    1. generate_plan_briefing(ticket_id, raw_idea) -> str
+    2. generate_tdd_red_briefing(ticket_id) -> str
+    3. generate_implementation_briefing(ticket_id) -> str
 """
 
 __version__ = "1.0.0"

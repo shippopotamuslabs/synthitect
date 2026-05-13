@@ -82,7 +82,7 @@ class TestFileManager:
     def test_read_template_from_bundled_prompts_not_base_dir(self, temp_dir):
         """Test that read_template uses bundled prompts, NOT base_dir.
 
-        This is a critical test for multi-project usage where SYNTHIECT_BASE_DIR
+        This is a critical test for multi-project usage where SYNTHITECT_BASE_DIR
         points to a different project but prompts are bundled with the package.
 
         The bug this catches: read_template previously used base_dir, which broke
@@ -105,7 +105,7 @@ class TestFileManager:
     def test_read_template_works_with_different_base_dir(self):
         """Test that read_template works when base_dir is set to a different project.
 
-        Simulates the real-world scenario where SYNTHIECT_BASE_DIR=/path/to/projectA
+        Simulates the real-world scenario where SYNTHITECT_BASE_DIR=/path/to/projectA
         but prompts are bundled with the MCP server package.
         """
         with tempfile.TemporaryDirectory() as temp_dir:

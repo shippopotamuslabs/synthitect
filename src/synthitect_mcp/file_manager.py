@@ -72,7 +72,7 @@ class FileManager:
         since plans go to the target project but prompts are fixed CFAW templates.
 
         Args:
-            template_name: Name of the template file (e.g., 'discovery-phase.md').
+            template_name: Name of the template file (e.g., 'plan-phase.md').
 
         Returns:
             Template contents as string.
@@ -164,7 +164,7 @@ class FileManager:
 
         Args:
             ticket_id: The ticket identifier.
-            phase: The phase to mark (discovery, spec, tdd_red, implementation, audit).
+            phase: The phase to mark (plan, tdd_red, implementation).
             completed: Whether this phase is completed (True) or in_progress (False).
 
         Returns:
