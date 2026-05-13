@@ -74,6 +74,22 @@ Write the implementation plan as numbered tasks. Each task is 2–5 minutes of w
 ## Constitution Audit
 [One sentence: "This design adheres to [specific rules from CLAUDE.md]."]
 
+## Subagent-Driven Execution
+
+Downstream executors (TDD Red Sub-Agent, Implementation Sub-Agent, or a human following this plan) act as **coordinators first, implementers second**. For each **Implementation Task** below:
+
+1. **Spawn** a child subagent scoped to that task alone (for example: author the failing tests for the task's named scenarios, or implement the production change the task describes).
+2. **Review** the child subagent's output against this document as the contract — accept nothing that contradicts the File Structure, API Contracts & Interfaces, the task **Files** lists, or the task-to-scenario bindings — before advancing to the next task.
+3. **Repeat** task by task in order. Do not fold multiple unrelated tasks into one child run unless a task explicitly instructs a bundled scope.
+
+Scenario IDs are the **unit of work** each child subagent must satisfy for its task; cross-check every ID the task names under **Verifies scenarios** against `test_spec.md` before closing the task.
+
+**Per-child review checklist (parent executor):**
+- Paths touched match the task **Files** entries and the File Structure table; no edits outside listed paths.
+- Every **Verifies scenarios** ID for that task shows the intended test state for the current phase (red where failure is expected; green where pass is expected), per `test_spec.md`.
+- No scope drift: no unlisted files, no extra behaviors, no shortcuts that bypass this spec.
+- Deliverables live in real source and test files aligned with this spec — no substitute that embeds runnable tests or implementation bodies here or otherwise diverges from the contract.
+
 ---
 
 ## Implementation Tasks
@@ -172,6 +188,7 @@ Search both artifacts for any of these — each is a plan failure:
 - "similar to Task N" / "as above" — repeat the actual content
 - Then clauses without literal values — "the result is correct", "the output is as expected", "returns the right thing" are all failures
 - References to types, functions, or methods not defined anywhere in the spec
+- Missing, empty, or generic **Subagent-Driven Execution** section in `spec.md` — it must include spawn / review / repeat, scenario IDs as the per-task unit of work for child subagents, and the full per-child review checklist; no one-line placeholder summary instead of those elements
 
 ### Check 2: Hallucination Check
 For every file listed in the File Structure table:
@@ -190,6 +207,9 @@ For each requirement in the feature request:
 
 For each task in `spec.md` that introduces behavior:
 - Does it reference at least one scenario ID?
+
+For **Subagent-Driven Execution** in `spec.md`:
+- Does it state that scenario IDs are the per-task unit of work for child subagents, and does every such ID appear under **Verifies scenarios** on the task that owns it?
 
 List any gaps. Add tasks/scenarios to fill them.
 
