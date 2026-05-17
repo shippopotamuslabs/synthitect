@@ -36,6 +36,18 @@ behavior.
 - Diff coherence and ownership fit
 - Runtime verification and command evidence
 
+## Admissible Findings Only
+
+Report only findings that materially affect correctness, approved behavior,
+contract compatibility, regression risk, required test confidence, test
+integrity, or runtime verification of the changed code. Each finding must name a
+concrete failure mode and a required correction.
+
+Do not report style preferences, naming taste, formatting churn, speculative
+architecture suggestions, broad cleanup, optional refactors, defensive hardening
+outside the approved scope, or "nice to have" comments. If a concern would not
+justify another implementation pass, omit it.
+
 ## Requirements
 
 - Read `spec.md`, `test_spec.md`, the Red Review result, and the final diff.
@@ -57,7 +69,8 @@ behavior.
 
 - `BLOCKER`: must fix before merge or handoff.
 - `MAJOR`: likely behavioral, contract, or coverage defect.
-- `MINOR`: real issue with limited risk.
+- `MINOR`: real correctness, contract, coverage, or verification issue with
+  limited risk. Do not use `MINOR` for style, taste, or optional cleanup.
 
 ## Architect Brief
 
@@ -79,6 +92,8 @@ Only report no findings if:
 - Approved scenarios are covered by passing tests.
 - No tests were weakened or rewritten to force green.
 - Any residual risks are explicitly named.
+- No admissible finding remains. Non-admissible comments must not keep the
+  review loop open.
 
 ## Output
 
@@ -92,7 +107,7 @@ Red Review, and final implementation. Produce:
 [Concise architectural and behavioral summary]
 
 ## Findings
-* [severity] `path:line` - [problem]. [fix]
+* [severity] `path:line` - [problem]. [required correction]
 
 ## Verification
 * Commands run: `[commands]`

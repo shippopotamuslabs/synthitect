@@ -2,7 +2,7 @@
 name: synthitect
 description: >-
   Orchestrate the Synthitect workflow: plan, human approval, TDD Red,
-  Red Review, implementation, and final review subagents.
+  Red Review loop, implementation, and final review loop subagents.
 ---
 
 # Synthitect
@@ -33,11 +33,38 @@ substitute for delegation.
 3. Follow the human gates exactly:
    - Plan: run the plan subagent, report its result, then wait for approval.
    - TDD Red: no human approval gate after the plan is approved.
-   - Red Review: validate the failing tests before implementation.
+   - Red Review Loop: validate the failing tests before implementation. If the
+     reviewer finds admissible issues, rerun the TDD Red subagent with the
+     findings as correction input, then rerun Red Review. Repeat until clean or
+     until the loop limit is reached.
    - Implementation: no human approval gate after a clean Red Review.
-   - Final Review: run before merge or handoff.
+   - Final Review Loop: run before merge or handoff. If the reviewer finds
+     admissible issues, rerun the Implementation subagent with the findings as
+     correction input, then rerun Final Review. Repeat until clean or until the
+     loop limit is reached.
 4. Never invent extra approvals, phase state, or persistence.
 5. Never paste the reference prompt into chat as the requested output.
+
+## Review Loop Rule
+
+Review loops are quality gates, not approval gates.
+
+- Maximum loop attempts: 3 review passes per review phase.
+- A loop continues only for admissible findings: correctness defects, approved
+  behavior drift, contract or boundary incompatibility, behavioral regression,
+  missing or weak required coverage, invalid Red phase tests, test weakening, or
+  unverified runtime behavior.
+- A loop must not continue for style preferences, naming taste, formatting
+  churn, broad architecture suggestions, speculative hardening, optional
+  refactors, or "nice to have" comments.
+- If a reviewer reports only non-admissible findings, treat the review as clean
+  and report those comments as ignored non-blocking notes only if they are useful.
+- If the loop limit is reached with admissible findings still open, stop and
+  report the unresolved findings, commands run, changed files, and blocker state
+  to the user.
+- Correction subagents must fix only the reported admissible findings and any
+  directly required fallout. They must not restart the phase, broaden scope, or
+  rewrite unrelated work.
 
 ## Delegation Contract
 
@@ -57,9 +84,9 @@ For each phase:
 1. Plan subagent
 2. Human approval
 3. TDD Red subagent
-4. TDD Red Review subagent
+4. TDD Red Review loop
 5. Implementation subagent
-6. Final review subagent
+6. Final Review loop
 
 ## What To Use
 
@@ -76,11 +103,17 @@ spec. Confirm every scenario has exactly one meaningful failing test, failures
 come from unimplemented behavior rather than setup errors, and no test uses a
 tautology, mocked system under test, production-derived expected value, or
 generic exception assertion. If the Red Review finds invalid or missing tests,
-stop and report the gap instead of proceeding to implementation.
+rerun the TDD Red subagent with those findings as correction input, then rerun
+Red Review. Proceed to implementation only after a clean Red Review, or stop
+after the loop limit with unresolved admissible findings.
 
 ## Review Standards
 
 For the final review, compare the implementation against the approved plan and
 test spec, trace changed behavior through callers and callees, and report
 evidence-backed findings. Prioritize fidelity to the plan, behavioral
-regressions, boundary and contract compatibility, and missing tests.
+regressions, boundary and contract compatibility, and missing tests. If the
+Final Review finds admissible issues, rerun the Implementation subagent with
+those findings as correction input, then rerun Final Review. Finish only after a
+clean Final Review, or stop after the loop limit with unresolved admissible
+findings.

@@ -33,6 +33,19 @@ current failures prove missing implementation rather than broken test setup.
 - Drift: touched files match the plan, except for justified test-support files
   required by the existing framework.
 
+## Admissible Findings Only
+
+Report only findings that would make the Red phase invalid or materially reduce
+confidence in the implementation phase. Admissible findings are limited to
+missing, duplicated, weak, or drifting scenario tests; failures caused by setup
+or infrastructure instead of unimplemented behavior; mocked SUTs; tautologies;
+production-derived expected values; generic exception assertions; nonfunctional
+stub violations; or unapproved file drift.
+
+Do not report style preferences, naming taste, formatting churn, speculative
+improvements, optional refactors, or "nice to have" comments. If a concern does
+not require correction before implementation can safely start, omit it.
+
 ## Requirements
 
 - Read `spec.md`, `test_spec.md`, the changed test files, and any stubs created
@@ -48,7 +61,15 @@ current failures prove missing implementation rather than broken test setup.
 
 - `BLOCKER`: implementation must not start until this is fixed.
 - `MAJOR`: likely to create false confidence or miss approved behavior.
-- `MINOR`: worth fixing, but does not invalidate the Red phase.
+- `MINOR`: real Red-phase integrity issue with limited risk. Do not use `MINOR`
+  for style, taste, or optional cleanup.
+
+## Clean Review Standard
+
+Report no findings when every approved scenario maps to exactly one meaningful
+failing test, all failures prove unimplemented behavior, stubs are nonfunctional,
+and there is no approved-spec drift. Do not keep the review loop open for
+non-admissible comments.
 
 ## Output
 
@@ -61,7 +82,7 @@ and Red phase result. Produce:
 * Scenario coverage: [N]/[N]
 * Red validity: pass|fail
 * Findings:
-  * [severity] `path:line` - [problem]. [fix]
+  * [severity] `path:line` - [problem]. [required correction]
 * Decision: proceed to implementation | stop and fix Red phase
 * Residual risks: [brief list, or None]
 ```
