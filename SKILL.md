@@ -1,92 +1,86 @@
-# Synthitect Protocol Orchestrator
+---
+name: synthitect
+description: >-
+  Orchestrate the Synthitect workflow: plan, human approval, TDD Red,
+  Red Review, implementation, and final review subagents.
+---
 
-You are the **Synthitect Protocol Orchestrator**. Delegate to specialized sub-agents. Do not do the work yourself.
+# Synthitect
+
+Use this skill when the user wants the Synthitect workflow or asks for work to
+be delegated to specialized phase subagents.
+
+## Core Rule
+
+Stay stateless. Do not track phase state, completed phases, or workflow memory
+in files or chat. Do not return a briefing as the chat answer. Instead, load the
+matching prompt from `references/`, fill in the request-specific context, and
+fire off the corresponding subagent to do the phase work. Report the subagent's
+result and stop only at the gate that the workflow requires.
+
+If the current runtime has no subagent/delegation tool, say that Synthitect
+cannot run the phase in this environment. Do not paste the phase briefing as a
+substitute for delegation.
 
 ## Trigger
 
-```
-/synthitect [idea]
-```
+`/synthitect [idea]`
 
-## Workflow: Three Phases
+## Workflow
 
-### Phase 1: Plan (Human Gate)
+1. Decide whether the request is atomic or needs the Synthitect workflow.
+2. For a workflow request, load the matching subagent prompt from `references/`.
+3. Follow the human gates exactly:
+   - Plan: run the plan subagent, report its result, then wait for approval.
+   - TDD Red: no human approval gate after the plan is approved.
+   - Red Review: validate the failing tests before implementation.
+   - Implementation: no human approval gate after a clean Red Review.
+   - Final Review: run before merge or handoff.
+4. Never invent extra approvals, phase state, or persistence.
+5. Never paste the reference prompt into chat as the requested output.
 
-Call `generate_plan_briefing(ticket_id, raw_idea)`. Spawn a Plan Sub-Agent with the returned briefing.
+## Delegation Contract
 
-The Plan Sub-Agent reads the codebase and produces:
-- `plans/{ticket_id}/spec.md` — target files, data models, API contracts
-- `plans/{ticket_id}/test_spec.md` — Given/When/Then scenarios with concrete expected values
+For each phase:
 
-**HARD HUMAN GATE:** Present both artifacts to the user. Do NOT proceed until they approve. This is the only human gate in the workflow.
+1. Read the relevant file from `references/`.
+2. Substitute `{{ ticket_id }}`, `{{ raw_idea }}`, and any phase context from
+   the current user request or completed artifacts.
+3. Spawn a specialized subagent with that filled prompt.
+4. Wait for the subagent when the next phase or human gate depends on its
+   result.
+5. Summarize the subagent's completion status, changed files, command evidence,
+   blockers, and gate state.
 
-### Phase 2: TDD Red (No Gate)
+## Phase Order
 
-After user approves the plan:
+1. Plan subagent
+2. Human approval
+3. TDD Red subagent
+4. TDD Red Review subagent
+5. Implementation subagent
+6. Final review subagent
 
-1. Mark plan phase complete: `file_manager.set_phase_state(ticket_id, "plan", completed=True)`
-2. Call `generate_tdd_red_briefing(ticket_id)`. Spawn a TDD Red Sub-Agent with the returned briefing.
+## What To Use
 
-The TDD Red Sub-Agent:
-- Creates skeleton stubs (raises `NotImplementedError`)
-- Writes one failing test per scenario in test_spec.md
+- `references/plan-briefing.md` for the plan sub-agent
+- `references/tdd-red-briefing.md` for the red-test sub-agent
+- `references/tdd-review-briefing.md` for the red-review sub-agent
+- `references/implementation-briefing.md` for the implementation sub-agent
+- `references/review-briefing.md` for the final review sub-agent
 
-Proceed immediately to Phase 3. No human approval needed.
+## TDD Red Review Standards
 
-Mark tdd_red complete: `file_manager.set_phase_state(ticket_id, "tdd_red", completed=True)`
+Before implementation, review the red tests against the approved plan and test
+spec. Confirm every scenario has exactly one meaningful failing test, failures
+come from unimplemented behavior rather than setup errors, and no test uses a
+tautology, mocked system under test, production-derived expected value, or
+generic exception assertion. If the Red Review finds invalid or missing tests,
+stop and report the gap instead of proceeding to implementation.
 
-### Phase 3: Implement
+## Review Standards
 
-Call `generate_implementation_briefing(ticket_id)`. Spawn an Implementation Sub-Agent with the returned briefing.
-
-The Implementation Sub-Agent writes production code to make all tests pass.
-
----
-
-## Tools
-
-| Tool | When to Call |
-|------|-------------|
-| `generate_plan_briefing(ticket_id, raw_idea)` | Phase 1 start |
-| `generate_tdd_red_briefing(ticket_id)` | After user approves plan |
-| `generate_implementation_briefing(ticket_id)` | After TDD Red completes |
-
-## Tier Classification
-
-On `/synthitect [idea]`, classify the work:
-- **Tier 1 (Atomic):** One file, trivial change. Execute directly under Constitution. Skip the pipeline.
-- **Tier 2 (Modular):** Standard feature. Run the three-phase pipeline.
-- **Tier 3 (Systemic):** Cross-cutting, multi-service, or high-risk. Run the pipeline with extra scrutiny; flag every drift.
-
-## Orchestrator Rules
-
-1. Never execute work directly. Always delegate.
-2. Never skip the human gate after Phase 1.
-3. Never modify test files during implementation.
-4. If a sub-agent reports drift (touching files not in spec), halt and get user decision.
-5. If a sub-agent reports ESCALATION, halt and resolve before continuing.
-
-## TDD Anti-Patterns (Reject If Present)
-
-| Anti-Pattern | Problem |
-|---|---|
-| Tautology | Test passes for any implementation |
-| Mocked SUT | System Under Test mocked in its own test |
-| Expected from production | Expected values derived by calling production code |
-| Generic exception catch | `catch(Exception)` instead of specific type |
-
-## File Locations
-
-| Artifact | Path |
-|---|---|
-| Spec | `plans/{ticket_id}/spec.md` |
-| Test Spec | `plans/{ticket_id}/test_spec.md` |
-| Phase State | `plans/{ticket_id}/.phase_state.json` |
-
-## The Contract
-
-1. Intelligence lives in specs, not chat history.
-2. No code without approved spec.
-3. Spec produces plan AND test spec. Tests are red before implementation.
-4. Implementation derives from spec. Tests verify, not blueprint.
-5. Behavioral scenarios define done.
+For the final review, compare the implementation against the approved plan and
+test spec, trace changed behavior through callers and callees, and report
+evidence-backed findings. Prioritize fidelity to the plan, behavioral
+regressions, boundary and contract compatibility, and missing tests.
