@@ -67,10 +67,18 @@ Before finishing, verify:
 - No unapproved files were touched except minimal test-support files required by
   the existing test framework.
 
+## Status Update
+
+After writing tests and stubs, update `plans/{{ ticket_id }}/status.md`:
+
+- Mark TDD Red complete in the phase checklist.
+- Set `Next phase` to Red Review.
+- Record test command and changed files under `Notes`.
+
 ## Output
 
 Go do the phase work just described for this phase based on the approved plan.
-Write the failing tests and minimal stubs, then report:
+Write the failing tests and minimal stubs, update `status.md`, then report:
 
 ```markdown
 ### RED PHASE COMPLETE

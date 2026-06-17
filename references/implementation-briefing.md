@@ -63,10 +63,18 @@ Stop and report instead of continuing when:
 - Passing the tests would require behavior that contradicts the spec.
 - The suite can only pass by weakening or rewriting tests.
 
+## Status Update
+
+After implementation, update `plans/{{ ticket_id }}/status.md`:
+
+- Mark Implementation complete in the phase checklist.
+- Set `Next phase` to Final Review.
+- Record test commands, pass counts, and changed files under `Notes`.
+
 ## Output
 
 Go do the phase work just described for this phase based on the approved plan
-and clean Red Review. Make the suite green, then report:
+and clean Red Review. Make the suite green, update `status.md`, then report:
 
 ```markdown
 ### GREEN PHASE COMPLETE
