@@ -71,10 +71,19 @@ failing test, all failures prove unimplemented behavior, stubs are nonfunctional
 and there is no approved-spec drift. Do not keep the review loop open for
 non-admissible comments.
 
+## Status Update
+
+After the review, update `plans/{{ ticket_id }}/status.md`:
+
+- Set Red Review checklist entry to `result: pass` or `result: fail`.
+- Increment `Loop Counts → Red Review` on each pass.
+- If pass: set `Next phase` to Implementation.
+- If fail: set `Next phase` to TDD Red (correction).
+
 ## Output
 
 Go do the phase work just described for this phase based on the approved plan
-and Red phase result. Produce:
+and Red phase result. Update `status.md`, then produce:
 
 ```markdown
 ### RED REVIEW COMPLETE

@@ -95,10 +95,19 @@ Only report no findings if:
 - No admissible finding remains. Non-admissible comments must not keep the
   review loop open.
 
+## Status Update
+
+After the review, update `plans/{{ ticket_id }}/status.md`:
+
+- Set Final Review checklist entry to `result: pass` or `result: fail`.
+- Increment `Loop Counts → Final Review` on each pass.
+- If pass: set `Next phase` to complete.
+- If fail: set `Next phase` to Implementation (correction).
+
 ## Output
 
 Go do the phase work just described for this phase based on the approved plan,
-Red Review, and final implementation. Produce:
+Red Review, and final implementation. Update `status.md`, then produce:
 
 ```markdown
 ### FINAL REVIEW COMPLETE
