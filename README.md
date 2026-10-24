@@ -137,11 +137,11 @@ nobody has checked yet.
 
 ## Repository layout
 
-```text
-SKILL.md              # orchestrator instructions
-references/           # subagent briefings, one per phase
-plans/                # per-ticket artifacts (in the project you work on)
-```
+| Path | Holds |
+| --- | --- |
+| `SKILL.md` | Orchestrator instructions |
+| `references/` | Subagent briefings, one per phase |
+| `plans/` | Per-ticket artifacts (in the project you work on) |
 
 ## Requirements
 
