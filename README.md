@@ -1,17 +1,15 @@
 # Synthitect
 
-Structured agent workflow for shipping features with AI coding tools. Synthitect
-orchestrates specialized subagents through alignment, planning, test-driven
-implementation, and review — with human gates where judgment matters and on-disk
-artifacts so work resumes across sessions and subscriptions.
+A structured workflow for shipping features with AI coding tools. Synthitect
+runs a feature request through a fixed pipeline of specialized subagents:
+research, design, structure, plan, test-driven implementation, and review.
+Human gates sit where judgment matters. Every phase writes its artifact to
+disk, so work resumes across sessions and across tools.
 
 ## What it does
 
-Synthitect turns a feature request into reviewed, tested code through a fixed
-pipeline. Each phase has a dedicated subagent briefing in `references/`. The
-orchestrator delegates phase work, stops at approval gates, and persists
-progress under `plans/{ticket_id}/` so you never re-explain context after
-switching tools.
+A feature request goes in. Reviewed, tested code comes out the other end,
+with the reasoning kept in files you can read.
 
 ```text
 Research → Design → Structure → Plan → TDD Red → Red Review → Implement → Final Review
@@ -19,16 +17,19 @@ Research → Design → Structure → Plan → TDD Red → Red Review → Implem
          human gate  human gate  human gate
 ```
 
-**Alignment (before code)** — objective codebase research, a design discussion
-artifact, and a vertical-slice structure outline. Catch wrong patterns early in
-documents you can read in minutes, not in a thousand-line plan.
+**Alignment (before code).** Objective codebase research, a design discussion
+artifact, and a vertical-slice structure outline. Wrong patterns get caught
+in documents that take minutes to read, before they turn into a long plan
+built on them.
 
-**Planning** — `spec.md` (implementation contract) and `test_spec.md` (Gherkin
-scenarios with literal expected values, mutation-defense included).
+**Planning.** `spec.md` holds the implementation contract. `test_spec.md`
+holds Gherkin scenarios with literal expected values, mutation defense
+included.
 
-**Execution** — failing tests first, red-phase integrity review, implementation
-to green, final evidence-backed review. Review loops rerun only for admissible
-findings (correctness, drift, weak coverage) — not style nits.
+**Execution.** Failing tests first, a review of the red phase's integrity,
+implementation to green, then a final evidence-backed review. Review loops
+rerun only for findings that matter (correctness, drift from the plan, weak
+coverage). Style nits do not loop.
 
 ## Quick start
 
@@ -40,8 +41,8 @@ Point your agent skills directory at this repo:
 ln -sfn /path/to/synthitect ~/.grok/skills/synthitect
 ```
 
-Works the same for Claude Code, Codex, or any runtime that loads skills from a
-path. The repo root *is* the skill (`SKILL.md` + `references/`).
+The same link works for Claude Code, Codex, or any runtime that loads skills
+from a path. The repo root is the skill: `SKILL.md` plus `references/`.
 
 ### Start a ticket
 
@@ -72,8 +73,8 @@ Same for Structure and Plan. After plan approval:
 Plan approved. Run the rest.
 ```
 
-TDD Red through Final Review runs without further approvals unless a review loop
-needs correction.
+TDD Red through Final Review then runs with no further approvals, unless a
+review loop needs a correction only you can make.
 
 ### Resume after switching tools
 
@@ -81,34 +82,34 @@ needs correction.
 Use synthitect to continue add-api-rate-limiting
 ```
 
-The agent reads `plans/{ticket_id}/status.md` and artifact files on disk to
-infer the next phase. No chat history required.
+The agent reads `plans/{ticket_id}/status.md` and the artifact files on disk
+and works out the next phase. No chat history required.
 
 ## Artifacts per ticket
 
 ```text
 plans/{ticket_id}/
   ticket.md       # captured request
-  status.md       # phase checklist, gates, loop counts — resume anchor
+  status.md       # phase checklist, gates, loop counts; the resume anchor
   research.md     # objective codebase map (questions + findings)
-  design.md       # alignment: current/target state, patterns, decisions
+  design.md       # current and target state, patterns, decisions
   structure.md    # vertical slices, checkpoints, file map preview
   spec.md         # tactical implementation plan
   test_spec.md    # Gherkin behavioral contract
 ```
 
-`status.md` is the checklist. Subagents update it when phases complete; you (or
-the orchestrator) record approvals there.
+`status.md` is the checklist. Subagents update it as phases complete. You, or
+the orchestrator, record approvals there.
 
 ## Human gates
 
 | Gate | What you review | Typical time |
 | --- | --- | --- |
-| Design | Patterns, decisions, open questions | 5–10 min |
+| Design | Patterns, decisions, open questions | 5 to 10 min |
 | Structure | Vertical slice order, checkpoints | 5 min |
-| Plan | Tasks, scenarios, contracts | 10–20 min |
+| Plan | Tasks, scenarios, contracts | 10 to 20 min |
 
-Research has no gate — it is facts only. Post-plan phases use automated review
+Research has no gate. It is facts only. Post-plan phases use automated review
 loops (max 3 passes each) instead of human approval.
 
 ## Triggers cheat sheet
@@ -119,7 +120,7 @@ loops (max 3 passes each) instead of human approval.
 | Named ticket | `/synthitect my-ticket-slug` |
 | Resume | `Use synthitect to continue my-ticket-slug` |
 | Approve | `Design approved. Continue synthitect.` |
-| Redirect | `Reject design — use EventBus pattern from src/foo, not legacy handler. Revise.` |
+| Redirect | `Reject design. Use the EventBus pattern from src/foo, not the legacy handler. Revise.` |
 | Autopilot after plan | `Plan approved. Run the rest.` |
 
 ## After a long design discussion
@@ -130,24 +131,25 @@ Your conversation still works as input. Wrap up with:
 Use synthitect to plan this out now. Ticket: websocket-reconnect
 ```
 
-Synthitect captures the request into `ticket.md`, then runs objective research
-before design — so the agent maps the codebase without baking premature
-solutions into the fact-finding phase.
+Synthitect captures the request into `ticket.md`, then runs objective
+research before design, so the fact-finding phase stays free of solutions
+nobody has checked yet.
 
 ## Repository layout
 
 ```text
 SKILL.md              # orchestrator instructions
-references/           # subagent briefings (one per phase)
-plans/                # per-ticket artifacts (gitignored or committed per project)
+references/           # subagent briefings, one per phase
+plans/                # per-ticket artifacts (in the project you work on)
 ```
 
 ## Requirements
 
-- An agent runtime with **subagent/delegation** support. Without it, Synthitect
-  cannot run phases and will say so rather than paste briefings into chat.
-- A project `CLAUDE.md` or `AGENTS.md` constitution file for subagents to read.
+- An agent runtime with subagent/delegation support. Without it, Synthitect
+  cannot run phases and will say so, rather than pasting briefings into chat.
+- A project `CLAUDE.md` or `AGENTS.md` constitution file for subagents to
+  read.
 
 ## License
 
-See [LICENSE](LICENSE).
+See `LICENSE`. Copyright (C) 2026 browntown development.
