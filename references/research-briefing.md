@@ -21,6 +21,11 @@ You write no production code in this phase.
 
 - Explore the codebase areas the vision touches: existing patterns, layer
   boundaries, the constitution's rules that will constrain the design.
+  Where the runtime supports workers, fan the factual legwork out to
+  parallel Scouts (see `references/orchestration.md`) and synthesize
+  their cited facts yourself — the report the human sees is yours, and
+  any fact your recommendation stands on gets spot-checked against its
+  citation first.
 - Research externally where the vision depends on facts outside the repo
   (APIs, platform behavior, library capabilities). Verify; do not recall.
 - Identify the load-bearing unknowns and resolve the ones that can be

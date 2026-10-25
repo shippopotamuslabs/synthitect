@@ -1,13 +1,15 @@
 ---
 name: synthitect
 description: >-
-  The Synthitect workflow, v2.0: vision intake, research, a formal plan
+  The Synthitect workflow, v2.1: vision intake, research, a formal plan
   artifact, implementation, a fresh-context architectural review loop, and
-  ship via pull request with an external reviewer. Modernized for current
-  frontier intelligence. Resume across sessions via plans/{ticket_id}/status.md.
+  ship via pull request with an external reviewer. Two-tier execution: a
+  frontier-model orchestrator plans and reviews while fast worker models
+  grep and implement. Modernized for current frontier intelligence. Resume
+  across sessions via plans/{ticket_id}/status.md.
 ---
 
-# Synthitect v2.0
+# Synthitect v2.1
 
 Use this skill when the user invokes `/synthitect` or asks for work to run
 through the Synthitect workflow.
@@ -47,6 +49,53 @@ evidence. Neither side does the other's job.
    silently "fixed." Code-level findings get fixed; architecture is the
    human's call.
 
+## Execution Model: Orchestrator and Workers
+
+The phases below describe *what* happens. This section describes *who* —
+and it is a two-tier split, because the two kinds of work want different
+models.
+
+- **The Orchestrator** is a frontier model. It owns the human
+  conversation, the vision, the Plan, and the Review. It never implements.
+  Its context is the scarcest resource in the system; everything in this
+  workflow exists to keep that context filled with decisions instead of
+  file contents.
+- **Workers** are fast, cheaper models (in Muse, Muse Spark
+  subagents are the house choice). They do the legwork in two shapes:
+  - **Scouts** — read-only information gathering. They grep, trace
+    callers, inventory modules, and answer factual questions with
+    `file:line` anchors. They report facts, never opinions, and never
+    talk to the human.
+  - **Implementers** — one per plan chunk. They enact the plan inside
+    their chunk's scope and return the implementation briefing's
+    evidence format. They never plan beyond their chunk.
+
+Assignment by phase: Research legwork fans out to parallel Scouts, with
+the Orchestrator synthesizing the report the human sees. The Plan is
+written by the Orchestrator alone — planning is the job the big brain is
+for. Implementation delegates to Implementers. Review belongs to the
+Orchestrator, which is structurally fresh-context: it never wrote the
+code, the workers did. Scouts may support Review by tracing call paths
+for the architect brief.
+
+Three working rules:
+
+1. **Parallelize scouts, serialize builders.** Scouts are read-only and
+   fan out freely. Implementers run one at a time when chunks touch
+   shared files or share a build; independent chunks may run in
+   parallel where the environment tolerates it.
+2. **Worker reports are claims.** The Orchestrator spot-checks any fact
+   a decision depends on — a read of the cited lines — before building
+   on it. This is cheap and catches the confident-error case.
+3. **No runtime support for subagents?** The Orchestrator runs the
+   worker phases itself, in sequence, and the tier split degrades to a
+   discipline: plan before touching code, review the final diff as if
+   someone else wrote it. The workflow survives; only the parallelism
+   and the context savings are lost.
+
+Full role definitions and assignment templates live in
+`references/orchestration.md`.
+
 ## Trigger
 
 `/synthitect [high-level vision]` — start or continue a ticket.
@@ -57,13 +106,13 @@ the user says continue or resume, or names a known ticket.
 
 ## Phases
 
-| # | Phase | Briefing | Output |
-| --- | --- | --- | --- |
-| 1 | Research | `references/research-briefing.md` | `research.md` + a conversational report to the human. **Gate: vision approval.** |
-| 2 | Plan | `references/plan-briefing.md` | `plan.md` with chunks and acceptance scenarios. Linear tickets mirrored when the project uses them. No gate. |
-| 3 | Implementation | `references/implementation-briefing.md` | The code, tests written alongside, command evidence in `status.md`. |
-| 4 | Review | `references/review-briefing.md` | Fresh-context review loop (max 3 rounds), including the project's Thermos pass where one exists. Architectural findings escalate as questions. |
-| 5 | Ship | — | Pull request per repo conventions; external reviewer runs; merge per repo convention; `status.md` marked complete. |
+| # | Phase | Who | Briefing | Output |
+| --- | --- | --- | --- | --- |
+| 1 | Research | Scouts gather, Orchestrator reports | `references/research-briefing.md` | `research.md` + a conversational report to the human. **Gate: vision approval.** |
+| 2 | Plan | Orchestrator | `references/plan-briefing.md` | `plan.md` with chunks and acceptance scenarios. Linear tickets mirrored when the project uses them. No gate. |
+| 3 | Implementation | Implementer workers | `references/implementation-briefing.md` | The code, tests written alongside, command evidence in `status.md`. |
+| 4 | Review | Orchestrator (+ Scouts for tracing) | `references/review-briefing.md` | Fresh-context review loop (max 3 rounds), including the project's Thermos pass where one exists. Architectural findings escalate as questions. |
+| 5 | Ship | Orchestrator | — | Pull request per repo conventions; external reviewer runs; merge per repo convention; `status.md` marked complete. |
 
 Do not return a briefing as the chat answer. Load the matching briefing from
 `references/`, fill in the request-specific context, and run the phase —
