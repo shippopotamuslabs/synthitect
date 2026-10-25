@@ -1,200 +1,126 @@
 ---
 name: synthitect
 description: >-
-  Orchestrate the Synthitect workflow: research, design, structure, plan,
-  human approvals, TDD Red, Red Review loop, implementation, and final review
-  loop subagents. Resume across sessions via plans/{ticket_id}/status.md.
+  The Synthitect workflow, v2.0: vision intake, research, a formal plan
+  artifact, implementation, a fresh-context architectural review loop, and
+  ship via pull request with an external reviewer. Modernized for current
+  frontier intelligence. Resume across sessions via plans/{ticket_id}/status.md.
 ---
 
-# Synthitect
+# Synthitect v2.0
 
-Use this skill when the user wants the Synthitect workflow or asks for work to
-be delegated to specialized phase subagents.
+Use this skill when the user invokes `/synthitect` or asks for work to run
+through the Synthitect workflow.
 
-## Core Rule
+The division of labor: the human supplies the vision and the architectural
+judgment. The model supplies research, the formal plan, implementation, and
+evidence. Neither side does the other's job.
 
-The orchestrator stays stateless in chat — do not track phase progress only in
-conversation memory. Persist progress on disk under `plans/{{ ticket_id }}/` and
-use that to resume work across sessions or tool switches.
+## Core Rules
 
-Do not return a briefing as the chat answer. Load the matching prompt from
-`references/`, fill in request-specific context, and fire off the corresponding
-subagent. Report the subagent's result and stop only at the gate the workflow
-requires.
-
-If the current runtime has no subagent/delegation tool, say that Synthitect
-cannot run the phase in this environment. Do not paste the phase briefing as a
-substitute for delegation.
+1. **State lives on disk.** The orchestrator does not track progress only in
+   conversation memory. Every ticket keeps `plans/{{ ticket_id }}/status.md`;
+   phases update it as they finish. Sessions compact, crash, and get replaced;
+   the work resumes from artifacts.
+2. **One human gate, at the vision.** After Research, the findings and the
+   proposed direction are reported to the human in chat, conversationally.
+   The human approves, redirects, or kills the direction there. That is the
+   only approval gate in the workflow.
+3. **The plan is written for the model.** The formal plan is the model's
+   working reference during implementation — a memory anchor, not a document
+   the human is expected to read or sign. The human already approved what is
+   in it during the vision conversation.
+4. **No test-first phase.** Tests are written with the code, for regression
+   protection, with expectations taken from the plan's acceptance scenarios.
+   Scenario thinking lives in the plan. (The research for this is in the
+   README; the short version is that agent-written tests-first measurably do
+   not move outcomes, and the ceremony costs real time.)
+5. **Review happens in a fresh context.** The reviewer did not write the code
+   and does not inherit the production session's reasoning. It applies the
+   admissible-findings discipline from the review briefing: material findings
+   with file:line citations and command evidence, or silence.
+6. **Loops are capped.** The review loop runs at most 3 rounds. Anything
+   unresolved after that escalates to the human with the disagreement stated
+   plainly.
+7. **Architectural questions go to the human.** A finding that questions the
+   design itself is reported as a question with the alternative stated, never
+   silently "fixed." Code-level findings get fixed; architecture is the
+   human's call.
 
 ## Trigger
 
-`/synthitect [idea]` — start or continue a ticket.
+`/synthitect [high-level vision]` — start or continue a ticket.
 
-If the user omits a ticket id, derive a short slug from the idea (e.g.
-`add-user-auth`). Reuse an existing `plans/{ticket_id}/` directory when the
-user says continue, resume, or names a known ticket.
+If the user omits a ticket id, derive a short slug from the vision
+(e.g. `add-user-auth`). Reuse an existing `plans/{ticket_id}/` directory when
+the user says continue or resume, or names a known ticket.
+
+## Phases
+
+| # | Phase | Briefing | Output |
+| --- | --- | --- | --- |
+| 1 | Research | `references/research-briefing.md` | `research.md` + a conversational report to the human. **Gate: vision approval.** |
+| 2 | Plan | `references/plan-briefing.md` | `plan.md` with chunks and acceptance scenarios. Linear tickets mirrored when the project uses them. No gate. |
+| 3 | Implementation | `references/implementation-briefing.md` | The code, tests written alongside, command evidence in `status.md`. |
+| 4 | Review | `references/review-briefing.md` | Fresh-context review loop (max 3 rounds), including the project's Thermos pass where one exists. Architectural findings escalate as questions. |
+| 5 | Ship | — | Pull request per repo conventions; external reviewer runs; merge per repo convention; `status.md` marked complete. |
+
+Do not return a briefing as the chat answer. Load the matching briefing from
+`references/`, fill in the request-specific context, and run the phase —
+delegated to a subagent where the runtime supports it and the task is large
+enough to warrant it, inline for small work. The Research report and the
+fresh-context Review are never skipped; they are the workflow.
 
 ## Resume Protocol
 
-Before choosing a phase, read `plans/{{ ticket_id }}/status.md` when it exists
-and verify artifacts on disk. Use this order:
+Before choosing a phase, read `plans/{{ ticket_id }}/status.md` when it
+exists and verify artifacts on disk.
 
 | Condition | Next action |
 | --- | --- |
-| No `plans/{{ ticket_id }}/` | Create dir; write `ticket.md` from user request; start **Research** |
-| No `research.md` | **Research** |
-| `research.md` exists, no `design.md` | **Design** |
-| `design.md` exists, design not approved in `status.md` | Report gate; wait for human approval |
-| Design approved, no `structure.md` | **Structure** |
-| `structure.md` exists, structure not approved in `status.md` | Report gate; wait for human approval |
-| Structure approved, no `spec.md` or `test_spec.md` | **Plan** |
-| Plan artifacts exist, plan not approved in `status.md` | Report gate; wait for human approval |
-| Plan approved, red tests not written | **TDD Red** |
-| Red tests exist, Red Review not clean | **Red Review** loop |
-| Red Review clean, tests still failing | **Implementation** |
-| Tests green, Final Review not clean | **Final Review** loop |
-| Final Review clean | Report complete; ready for merge/handoff |
+| No `plans/{{ ticket_id }}/` | Create dir; write `ticket.md` from the user's vision, verbatim; start **Research** |
+| Research done, vision not approved in `status.md` | Report the gate; wait for the human |
+| Vision approved, no `plan.md` | **Plan** |
+| `plan.md` exists, implementation incomplete | **Implementation** (next unfinished chunk) |
+| Implementation complete, review not clean | **Review** loop |
+| Review clean, PR not merged | **Ship** |
+| PR merged | Report complete |
 
 When resuming, summarize the checklist from `status.md` and the inferred next
-phase before spawning a subagent.
+phase before starting work.
 
 ## Status File
-
-Every ticket keeps `plans/{{ ticket_id }}/status.md`. Subagents update it when
-they finish. The orchestrator updates it when recording human approvals.
-
-Template:
 
 ```markdown
 # Status: {{ ticket_id }}
 
 ## Phase Checklist
-- [ ] Research
-- [ ] Design — approval: pending
-- [ ] Structure — approval: pending
-- [ ] Plan — approval: pending
-- [ ] TDD Red
-- [ ] Red Review — result: pending
+- [ ] Research — vision approval: pending
+- [ ] Plan
 - [ ] Implementation
-- [ ] Final Review — result: pending
+- [ ] Review — rounds: 0/3, result: pending
+- [ ] Ship — PR: none
 
 ## Current Gate
-none | awaiting human approval (design) | awaiting human approval (structure) | awaiting human approval (plan)
+none | awaiting vision approval | awaiting architecture decision
 
 ## Next Phase
-[phase name after current gate clears]
-
-## Loop Counts
-- Red Review: 0/3
-- Final Review: 0/3
+[phase name]
 
 ## Notes
-[blockers, open questions, changed files, last commands]
+[blockers, open questions, changed files, last commands and their results]
 ```
 
-When the user approves design, structure, or plan, update the checklist entry to
-`approval: yes` (with date), clear `Current Gate`, and set `Next Phase`.
+## Scaling
 
-## Workflow
+The ceremony scales to the work. A one-file fix does not need five artifacts;
+run the phases inline and keep `status.md` honest. A multi-day feature gets
+the full path with delegated phases. When in doubt, keep the two load-bearing
+pieces — research reported to the human before code, and review in a fresh
+context after it — and compress the rest.
 
-1. Run the Resume Protocol to pick the correct phase.
-2. Load the matching subagent prompt from `references/`.
-3. Follow the human gates exactly:
-   - Research: no human approval gate.
-   - Design: run the design subagent, report its result, then wait for approval.
-   - Structure: run after design approval; report result, then wait for approval.
-   - Plan: run after structure approval; report result, then wait for approval.
-   - TDD Red: no human approval gate after the plan is approved.
-   - Red Review Loop: validate failing tests before implementation. If the
-     reviewer finds admissible issues, rerun the TDD Red subagent with the
-     findings as correction input, then rerun Red Review. Repeat until clean or
-     until the loop limit is reached.
-   - Implementation: no human approval gate after a clean Red Review.
-   - Final Review Loop: run before merge or handoff. If the reviewer finds
-     admissible issues, rerun the Implementation subagent with the findings as
-     correction input, then rerun Final Review. Repeat until clean or until the
-     loop limit is reached.
-4. Never invent extra approvals or skip recorded gates.
-5. Never paste the reference prompt into chat as the requested output.
+## If the runtime has no subagents
 
-## Review Loop Rule
-
-Review loops are quality gates, not approval gates.
-
-- Maximum loop attempts: 3 review passes per review phase.
-- A loop continues only for admissible findings: correctness defects, approved
-  behavior drift, contract or boundary incompatibility, behavioral regression,
-  missing or weak required coverage, invalid Red phase tests, test weakening, or
-  unverified runtime behavior.
-- A loop must not continue for style preferences, naming taste, formatting
-  churn, broad architecture suggestions, speculative hardening, optional
-  refactors, or "nice to have" comments.
-- If a reviewer reports only non-admissible findings, treat the review as clean
-  and report those comments as ignored non-blocking notes only if they are useful.
-- If the loop limit is reached with admissible findings still open, stop and
-  report the unresolved findings, commands run, changed files, and blocker state
-  to the user.
-- Correction subagents must fix only the reported admissible findings and any
-  directly required fallout. They must not restart the phase, broaden scope, or
-  rewrite unrelated work.
-
-## Delegation Contract
-
-For each phase:
-
-1. Read the relevant file from `references/`.
-2. Substitute `{{ ticket_id }}`, `{{ raw_idea }}`, and any phase context from
-   the current user request or completed artifacts.
-3. Spawn a specialized subagent with that filled prompt.
-4. Wait for the subagent when the next phase or human gate depends on its
-   result.
-5. Update `plans/{{ ticket_id }}/status.md` if the subagent did not.
-6. Summarize completion status, changed files, command evidence, blockers, and
-   gate state.
-
-## Phase Order
-
-1. Research subagent
-2. Design subagent
-3. Human approval (design)
-4. Structure subagent
-5. Human approval (structure)
-6. Plan subagent
-7. Human approval (plan)
-8. TDD Red subagent
-9. TDD Red Review loop
-10. Implementation subagent
-11. Final Review loop
-
-## What To Use
-
-- `references/research-briefing.md` for the research sub-agent
-- `references/design-briefing.md` for the design sub-agent
-- `references/structure-briefing.md` for the structure sub-agent
-- `references/plan-briefing.md` for the plan sub-agent
-- `references/tdd-red-briefing.md` for the red-test sub-agent
-- `references/tdd-review-briefing.md` for the red-review sub-agent
-- `references/implementation-briefing.md` for the implementation sub-agent
-- `references/review-briefing.md` for the final review sub-agent
-
-## TDD Red Review Standards
-
-Before implementation, review the red tests against the approved plan and test
-spec. Confirm every scenario has exactly one meaningful failing test, failures
-come from unimplemented behavior rather than setup errors, and no test uses a
-tautology, mocked system under test, production-derived expected value, or
-generic exception assertion. If the Red Review finds invalid or missing tests,
-rerun the TDD Red subagent with those findings as correction input, then rerun
-Red Review. Proceed to implementation only after a clean Red Review, or stop
-after the loop limit with unresolved admissible findings.
-
-## Review Standards
-
-For the final review, compare the implementation against the approved plan and
-test spec, trace changed behavior through callers and callees, and report
-evidence-backed findings. Prioritize fidelity to the plan, behavioral
-regressions, boundary and contract compatibility, and missing tests. If the
-Final Review finds admissible issues, rerun the Implementation subagent with
-those findings as correction input, then rerun Final Review. Finish only after a
-clean Final Review, or stop after the loop limit with unresolved admissible
-findings.
+Run the phases inline, but keep the Review as a separate pass over the final
+diff with the production reasoning out of scope, and say in the report that it
+ran inline. V1 refused to run at all in that case. V2 considers that precious.
