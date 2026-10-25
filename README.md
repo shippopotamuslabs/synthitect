@@ -1,8 +1,10 @@
 # Synthitect
 
-This skill is the formalization of the way I usually code with agents.
-Every piece of it is a habit that survived real projects. I wrote the
-habits down so the agent runs the same loop I run by hand.
+Synthitect is one engineer's habits for coding with agents, written
+down as a skill. It claims no authority. It is the way Sean Brown
+happens to work, formalized so an agent can run the same loop he runs
+by hand. Take what survives contact with your own projects and leave
+the rest.
 
 It has two layers. The bottom layer is agent engineering: one
 frontier model plans and reviews, smaller workhorse models run the
@@ -24,14 +26,14 @@ directory.
 
 ## Layer one: the agent engineering
 
-Three roles. The work each role does is priced for the brain doing it.
+Three roles. Each role's work is priced for the brain doing it.
 
 **The Orchestrator** is a frontier model. It holds the vision, writes
 the plan, talks to the human, and reviews the result. It never
 implements. Its context window is the scarcest resource in the whole
 system, so the design spends that context on decisions. File contents
 are cheap to fetch and expensive to hold; the Orchestrator reads code
-to check a claim or to review a diff, and delegates everything else.
+to check a claim or to review a diff, and delegates the rest.
 
 **Scouts** are workhorse models (Muse Spark subagents, in Muse
 Code) doing read-only legwork. A scout answers one factual question
@@ -51,59 +53,58 @@ Why this shape works:
 
 Judgment and throughput are different goods, and they cost different
 amounts. Planning a migration and reviewing a diff burn capability.
-Grepping for callers and typing a scoped chunk burn tokens. Paying
-frontier prices for grep is waste, and asking a workhorse model to
-hold the architecture in its head is risk. The split prices each job
+Grepping for callers and typing a scoped chunk burn tokens. Frontier
+prices for grep work are waste, and a workhorse model holding the
+whole architecture in its head is a risk. The split prices each job
 at what the job actually is.
 
 Review independence stops depending on discipline. A model reviewing
 code inside the session that produced it defends the code; the
-research on this is blunt[^3]. Here the reviewer never wrote the code
-under review, because a different model did. The structure guarantees
-what prompting tricks cannot.
+research on this is blunt[^3]. In this setup the reviewer never wrote
+the code under review, because a different model did. The structure
+supplies what prompting tricks cannot.
 
-Escalation has one path: worker, Orchestrator, human. The human hears
-about architecture questions and genuine blockers. Everything else
-resolves below him, and the Orchestrator spot-checks any worker claim
-a decision stands on before acting on it. Trust, with the cited lines
-opened once.
+Escalation has one path: worker, Orchestrator, human. Architecture
+questions and genuine blockers reach the human. Everything else
+resolves below that line, and the Orchestrator spot-checks any worker
+claim a decision stands on before acting on it.
 
 ## Layer two: the workflow
 
-Five phases run on top of layer one. Each one exists because of where
-it sits.
+Five phases run on top of layer one. Each one sits where it sits for
+a reason.
 
-**1. Vision discussion.** I state the vision at the level I think at:
-the architecture, the intent, the constraints I already know. The
-Orchestrator fans scouts out over the codebase, checks the facts the
-vision depends on, and reports back in conversation: what exists, the
-direction it proposes, the alternative it rejected, the questions only
-I can answer. I approve, redirect, or kill it. This is the only
-approval gate in the workflow, and it sits here on purpose. It is the
-one moment where a decision from me changes the work more than any
-document could. A wrong direction caught in conversation costs a
-conversation. The same direction caught after implementation costs
-the implementation.
+**1. Vision discussion.** The human states the vision at the level he
+thinks at: the architecture, the intent, the constraints already
+known. The Orchestrator fans scouts out over the codebase, checks the
+facts the vision depends on, and reports back in conversation: what
+exists, the direction it proposes, the alternative it rejected, the
+questions only the human can answer. The human approves, redirects,
+or kills it. This is the only approval gate in the workflow, and its
+placement is the point. A wrong direction caught in conversation
+costs a conversation. The same direction caught after implementation
+costs the implementation.
 
 **2. Plan.** The Orchestrator writes the formal plan: the goal,
 architecture decisions with the reasons behind them, the work broken
 into ordered chunks, and acceptance scenarios for each chunk, stated
 as behavior a test can check. The plan is the model's working
-reference, and it is written for that reader. I skim it, one pass for
-direction and obvious problems, and on small tickets I do not read it
-at all. It works anyway. Writing the decomposition down forces it into
-the open before code exists, and the file anchors the work hours
-later, when the session has drifted and the original conversation is
-gone. The research on spec-driven work points the same way, with the
-human refining at exactly the level I refine: the vision[^5].
+reference, and it is written for that reader. The human skims it, one
+pass for direction and obvious problems, and on small tickets does
+not read it at all. It works anyway. Writing the decomposition down
+forces it into the open before code exists, and the file anchors the
+work hours later, when the session has drifted and the original
+conversation is gone. The research on spec-driven work points the
+same way, with the human refining at exactly this level: the
+vision[^5].
 
 **3. Implement.** Implementers take one chunk at a time, in plan
 order. Tests are written with the code, and their expectations come
 from the plan's scenarios, never from calling the code under test. A
 chunk ends when its scenarios hold and its commands pass, with the
 results recorded. An architectural surprise stops the line: it goes
-back to the Orchestrator and comes to me as a question, and nobody
-improvises a new architecture mid-chunk.
+back to the Orchestrator and reaches the human as a question, and
+nobody improvises a new architecture mid-chunk.
 
 Tests ride along with the code here instead of leading it, and that
 ordering is an evidence call, not a taste call. Agent-written tests,
@@ -121,11 +122,11 @@ needs them, Thermos pass folded in where a project has one. Findings
 follow an admissibility rule carried over from V1, the best rule V1
 had: a finding names a concrete failure mode, cites file:line, and
 brings command evidence, or it does not get reported. Style taste
-stays home. Findings about the architecture itself come back to me as
+stays home. Findings about the architecture itself come back as
 questions, current shape against alternative, each stated on its own
-merits. Then I ask why it is done this way, we change what needs
-changing, and the loop runs again, three rounds at most. Anything
-still standing after round three lands on my desk as a stated
+merits. The human asks why it is done this way, the work changes what
+needs changing, and the loop runs again, three rounds at most.
+Anything still standing after round three arrives as a stated
 disagreement. No fourth round, no quiet merge.
 
 **5. Ship.** Pull request under the repo's own conventions, external
