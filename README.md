@@ -72,7 +72,7 @@ a reason.
 
 **1. Vision discussion.** The human states the vision at the level he
 thinks at: the architecture, the intent, the constraints already
-known. The Orchestrator fans scouts out over the codebase, checks the
+known. He gives the model the high level, abstract blueprint for what needs to be built. The Orchestrator fans scouts out over the codebase, checks the
 facts the vision depends on, and reports back in conversation: what
 exists, the direction it proposes, the alternative it rejected, the
 questions only the human can answer. The human approves, redirects,
