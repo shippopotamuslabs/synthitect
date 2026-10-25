@@ -29,9 +29,12 @@ evidence. Neither side does the other's job.
    The human approves, redirects, or kills the direction there. That is the
    only approval gate in the workflow.
 3. **The plan is written for the model.** The formal plan is the model's
-   working reference during implementation — a memory anchor, not a document
-   the human is expected to read or sign. The human already approved what is
-   in it during the vision conversation.
+   working reference during implementation — a memory anchor. The human
+   approved what is in it during the vision conversation and typically
+   skims it for direction and obvious problems — scaled by the size of
+   the work, down to not at all for small tickets. Nobody is expected to
+   deep-read it or verify its references; the workflow does not depend
+   on the read.
 4. **No test-first phase.** Tests are written with the code, for regression
    protection, with expectations taken from the plan's acceptance scenarios.
    Scenario thinking lives in the plan. (The research for this is in the
