@@ -1,50 +1,17 @@
 # Synthitect
 
 This skill is the formalization of the way I usually code with agents.
-Every phase in it is a habit that survived real projects. I wrote the
+Every piece of it is a habit that survived real projects. I wrote the
 habits down so the agent runs the same loop I run by hand.
 
-Five phases: vision, research, plan, implementation, review. The human
-supplies the vision and the architectural judgment. The model does the
-rest and brings receipts.
+It has two layers. The bottom layer is agent engineering: one
+frontier model plans and reviews, smaller workhorse models run the
+legwork. The top layer is the workflow those agents run: vision,
+research, plan, implement, review, ship. State lives on disk under
+both layers, because sessions are mortal and projects are not.
 
 Version 2.0: modernized for current frontier intelligence.
-Version 2.1 adds the two-tier execution model.
-
-## How it is constructed, and why
-
-The phases are the loop I run. I state a high-level vision. The model
-goes and learns things and reports back. If the direction sounds
-right, it writes the formal plan. I skim the plan. One pass, looking
-for direction and obvious problems. I skip the twenty-minute read with
-every code reference checked, and on small tickets I skip the read
-entirely. The research conversation is where I approved the contents.
-The document itself is the model's reference[^5]. Then it implements.
-I review for architecture, run the Thermos pass, and ask "why is it
-done this way?" until the answers stop being interesting. Then a pull
-request, an external reviewer, and a merge.
-
-The two tiers are my Muse setup. One big-brain agent plans and
-reviews. Fast subagents, Muse Spark, grep the codebase and implement
-the chunks. Judgment work goes to the expensive model. Throughput work
-goes to the fast ones. The reviewer never wrote the code it
-reviews[^3].
-
-State lives on disk. Sessions compact, crash, and get replaced
-mid-project, at every model tier. `status.md` holds the project's
-memory. Chats lose theirs.
-
-There is one approval gate. One moment in the loop has me making a
-real decision: the research comes back and the direction gets set.
-V1 gated three more times. Its models needed supervision between
-gates. Current models hold up.
-
-Tests guard regressions. That is their job, and they do it written
-with the code, aimed at the plan's scenarios. The test-first phase was
-cut on evidence[^1][^2][^4], detailed in the obituary below. Tests
-drawn from an independent specification help a great deal[^6]. The
-scenarios therefore live in the plan, and the implementation takes its
-expectations from the plan.
+Version 2.1 adds the two-tier execution model, layer one below.
 
 ## Usage
 
@@ -52,34 +19,127 @@ expectations from the plan.
 /synthitect [your high-level vision]
 ```
 
-1. Research. The model investigates the codebase and the facts, then
-   reports the findings and a proposed direction back to you, in
-   conversation. You approve, redirect, or kill it. This is the only
-   gate in the workflow.
-2. Plan. The model writes the formal plan: architecture decisions,
-   chunks, acceptance scenarios. The model reads this document for the
-   rest of the job. You skim it at most, and on small work you skip it.
-   You approved its contents during step 1.
-3. Implementation. Chunk by chunk. Tests written with the code.
-   Commands run and recorded.
-4. Review. A fresh context that never wrote the code reviews it
-   against the plan and the project constitution, Thermos pass
-   included where one exists. Findings about the architecture itself
-   come back to you as questions. Rounds cap at three.
-5. Ship. Pull request, external reviewer, merge.
-
-Progress lives on disk in `plans/{ticket_id}/status.md`. Any session
-can pick the work up where the last one left off.
-
-Execution runs on two tiers. A frontier model orchestrates: it holds
-the vision, writes the plan, talks to the human, and reviews. Fast
-worker models run the legwork. Scouts grep and trace the codebase and
-report cited facts. Implementers enact one plan chunk each. The
-orchestrator reviews code other models wrote, so its fresh context
-comes from the structure of the thing.
-
 Install: copy `SKILL.md` and `references/` into your agent's skills
 directory.
+
+## Layer one: the agent engineering
+
+Three roles. The work each role does is priced for the brain doing it.
+
+**The Orchestrator** is a frontier model. It holds the vision, writes
+the plan, talks to the human, and reviews the result. It never
+implements. Its context window is the scarcest resource in the whole
+system, so the design spends that context on decisions. File contents
+are cheap to fetch and expensive to hold; the Orchestrator reads code
+to check a claim or to review a diff, and delegates everything else.
+
+**Scouts** are workhorse models (Muse Spark subagents, in Muse
+Code) doing read-only legwork. A scout answers one factual question
+about the codebase: every caller of this function, where this module
+persists its state, which tests touch this table. It answers with
+file:line citations and quoted lines, and it runs in parallel with its
+siblings. A scout with an opinion is a bug. Facts come back, the
+Orchestrator does the thinking.
+
+**Implementers** are workhorse models too, one per plan chunk. An
+implementer enacts its chunk, writes the chunk's tests, and reports
+back in evidence: files changed, commands run, results. Anything it
+finds that reaches past its chunk comes back as a flag for the
+Orchestrator. Implementers never widen their own scope.
+
+Why this shape works:
+
+Judgment and throughput are different goods, and they cost different
+amounts. Planning a migration and reviewing a diff burn capability.
+Grepping for callers and typing a scoped chunk burn tokens. Paying
+frontier prices for grep is waste, and asking a workhorse model to
+hold the architecture in its head is risk. The split prices each job
+at what the job actually is.
+
+Review independence stops depending on discipline. A model reviewing
+code inside the session that produced it defends the code; the
+research on this is blunt[^3]. Here the reviewer never wrote the code
+under review, because a different model did. The structure guarantees
+what prompting tricks cannot.
+
+Escalation has one path: worker, Orchestrator, human. The human hears
+about architecture questions and genuine blockers. Everything else
+resolves below him, and the Orchestrator spot-checks any worker claim
+a decision stands on before acting on it. Trust, with the cited lines
+opened once.
+
+## Layer two: the workflow
+
+Five phases run on top of layer one. Each one exists because of where
+it sits.
+
+**1. Vision discussion.** I state the vision at the level I think at:
+the architecture, the intent, the constraints I already know. The
+Orchestrator fans scouts out over the codebase, checks the facts the
+vision depends on, and reports back in conversation: what exists, the
+direction it proposes, the alternative it rejected, the questions only
+I can answer. I approve, redirect, or kill it. This is the only
+approval gate in the workflow, and it sits here on purpose. It is the
+one moment where a decision from me changes the work more than any
+document could. A wrong direction caught in conversation costs a
+conversation. The same direction caught after implementation costs
+the implementation.
+
+**2. Plan.** The Orchestrator writes the formal plan: the goal,
+architecture decisions with the reasons behind them, the work broken
+into ordered chunks, and acceptance scenarios for each chunk, stated
+as behavior a test can check. The plan is the model's working
+reference, and it is written for that reader. I skim it, one pass for
+direction and obvious problems, and on small tickets I do not read it
+at all. It works anyway. Writing the decomposition down forces it into
+the open before code exists, and the file anchors the work hours
+later, when the session has drifted and the original conversation is
+gone. The research on spec-driven work points the same way, with the
+human refining at exactly the level I refine: the vision[^5].
+
+**3. Implement.** Implementers take one chunk at a time, in plan
+order. Tests are written with the code, and their expectations come
+from the plan's scenarios, never from calling the code under test. A
+chunk ends when its scenarios hold and its commands pass, with the
+results recorded. An architectural surprise stops the line: it goes
+back to the Orchestrator and comes to me as a question, and nobody
+improvises a new architecture mid-chunk.
+
+Tests ride along with the code here instead of leading it, and that
+ordering is an evidence call, not a taste call. Agent-written tests,
+imposed as a first phase, do not move resolution outcomes[^1], can
+raise regressions when the procedure is all the agent is given[^2],
+and make debugging worse when the model writes its own scaffolding
+before repairing[^4]. Supplied, independent specifications are a
+different animal: they raise correctness substantially[^6]. So the
+scenarios live in the plan, written before the code and independent
+of it, and the tests take their orders from there.
+
+**4. Review.** The Orchestrator reviews the diff against the plan and
+the project constitution, scouts tracing callers where the review
+needs them, Thermos pass folded in where a project has one. Findings
+follow an admissibility rule carried over from V1, the best rule V1
+had: a finding names a concrete failure mode, cites file:line, and
+brings command evidence, or it does not get reported. Style taste
+stays home. Findings about the architecture itself come back to me as
+questions, current shape against alternative, each stated on its own
+merits. Then I ask why it is done this way, we change what needs
+changing, and the loop runs again, three rounds at most. Anything
+still standing after round three lands on my desk as a stated
+disagreement. No fourth round, no quiet merge.
+
+**5. Ship.** Pull request under the repo's own conventions, external
+reviewer, merge. The state file gets marked complete, and the
+ticket's paper trail (plan, research, review rounds) sits in
+`plans/{ticket_id}/` for whoever picks the project up next, human or
+model.
+
+Underneath both layers, the state file does quiet work. Sessions
+compact, crash, and get replaced by newer sessions with no memory of
+the old ones. `status.md` holds the checklist, the gate state, the
+loop counts, and the notes with the last commands and their results.
+Any session, at either tier, reads the file and knows where the work
+stands. The chat is a conversation. The file is the memory.
 
 ## Version 1.0, an obituary
 
@@ -107,13 +167,7 @@ up later. So V2 keeps the parts of V1 aimed at those problems:
   its own homework generously, at every intelligence level.
 - Evidence over adjectives. Loop caps over endless polish rounds.
 
-The rest got deleted, the test-first phase included. Tests keep a
-codebase from regressing, and that work matters. Writing them first,
-for a model, carries no measurable effect: a 2026 study of frontier
-agents on real issue resolution (Chen et al., "Rethinking the Value of
-Agent-Generated Tests") found test-writing frequency had no
-significant effect on outcomes[^1], and the TDAD evaluation found TDD
-procedural instructions alone raised regressions[^2]. Scenario
+The rest got deleted, the test-first phase included. Scenario
 thinking moved into the plan. It does its work there.
 
 V1 sits under `legacy/` and at the `v1.0` tag. It is a museum now. It
