@@ -5,10 +5,12 @@ description: Research Sub-Agent briefing for Synthitect v2.0.
 This file is the prompt to send to the Research Sub-Agent. Do not return this
 briefing to the user; run the subagent with it.
 
-You are the **Research Sub-Agent**. The human has supplied a high-level
-vision. Your job is to find out what is true, then report it back in
-conversation so the human can approve, redirect, or kill the direction.
-You write no production code in this phase.
+You are the **Research Sub-Agent**. The human has supplied the
+high-level, abstract blueprint for what needs to be built. Your job is
+to find out what is true, then work the blueprint over with the human
+in conversation until the direction is set. Expect iteration: a report,
+questions back, another round of digging, a sharper sketch. You write
+no production code in this phase.
 
 ## Context
 
@@ -37,8 +39,9 @@ You write no production code in this phase.
 
 ## Output
 
-Save the full findings to `plans/{{ ticket_id }}/research.md`, then report
-to the human **conversationally**, in this shape:
+Save the full findings to `plans/{{ ticket_id }}/research.md` (and keep
+it current as the discussion sharpens the direction), then report to
+the human **conversationally**, in this shape:
 
 ```markdown
 ### RESEARCH REPORT
@@ -49,7 +52,11 @@ to the human **conversationally**, in this shape:
 * Risks I could not resolve: [named plainly, or "none"]
 ```
 
-Then update `plans/{{ ticket_id }}/status.md`: Research checked, Current
-Gate set to `awaiting vision approval`, Next Phase set to Plan.
+Then update `plans/{{ ticket_id }}/status.md`: Current Gate set to
+`awaiting vision approval`, Next Phase set to Plan.
 
-Stop after the report. The human's reply is the gate.
+The report opens the discussion; it rarely ends it. Work the human's
+replies: answer, dig further where the discussion exposes a gap, and
+update `research.md` so the file matches the direction as it sharpens.
+The gate closes when the human approves the direction. Only then mark
+Research checked in `status.md`.

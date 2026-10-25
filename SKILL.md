@@ -24,10 +24,13 @@ evidence. Neither side does the other's job.
    conversation memory. Every ticket keeps `plans/{{ ticket_id }}/status.md`;
    phases update it as they finish. Sessions compact, crash, and get replaced;
    the work resumes from artifacts.
-2. **One human gate, at the vision.** After Research, the findings and the
-   proposed direction are reported to the human in chat, conversationally.
-   The human approves, redirects, or kills the direction there. That is the
-   only approval gate in the workflow.
+2. **One human gate, at the vision.** The human opens with the high-level,
+   abstract blueprint for what needs to be built. Research reports back in
+   chat, and the two sides then build the system out at a high level,
+   iteratively: findings, questions, another round of scouting, a sharper
+   direction. The gate closes when the human approves the direction (or
+   kills it). It is the only approval gate in the workflow, and it is a
+   conversation, not a signature.
 3. **The plan is written for the model.** The formal plan is the model's
    working reference during implementation — a memory anchor. The human
    approved what is in it during the vision conversation and typically
