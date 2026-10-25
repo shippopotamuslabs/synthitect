@@ -76,7 +76,7 @@ known. He gives the model the high level, abstract blueprint for what needs to b
 facts the vision depends on, and reports back in conversation: what
 exists, the direction it proposes, the alternative it rejected, the
 questions only the human can answer. The human approves, redirects,
-or kills it. This is the only approval gate in the workflow, and its
+or kills it. This is usually an iterative process where you build out the system at a high level. This is the only approval gate in the workflow, and its
 placement is the point. A wrong direction caught in conversation
 costs a conversation. The same direction caught after implementation
 costs the implementation.
