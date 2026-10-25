@@ -1,5 +1,10 @@
 # Synthitect
 
+**This skill is the formalization of the way I usually code with
+agents.** Nothing in it is theoretical. Every phase is a habit that
+survived contact with real projects, written down so the agent runs
+the same loop I would run by hand.
+
 A workflow for shipping software with AI coding models, in five phases:
 vision, research, plan, implementation, review. The human supplies the
 vision and the architectural judgment. The model does everything else
@@ -7,6 +12,34 @@ and brings receipts.
 
 **Version 2.0 — modernized for current frontier intelligence.**
 (V2.1 adds the two-tier execution model below.)
+
+## How it's constructed, and why
+
+The construction mirrors the practice at every level:
+
+- **The phases are the loop I actually run.** I state a high-level
+  vision. The model goes and learns things and reports back; if the
+  direction sounds right, it writes the formal plan. I rarely read the
+  plan — I approved its contents in the research conversation, and the
+  document exists as the model's reference, not my homework. It
+  implements. I review for architecture, run the Thermos pass, and ask
+  "why is it done this way?" until the answers stop being interesting.
+  Then a pull request, an external reviewer, and a merge.
+- **The two tiers are my Muse setup.** One big-brain agent plans
+  and reviews; fast subagents (Muse Spark) grep the codebase and
+  implement the chunks. Judgment work goes to the expensive model,
+  throughput work goes to the fast ones, and the reviewer never wrote
+  the code it reviews.
+- **State lives on disk** because sessions compact, crash, and get
+  replaced mid-project, at every model tier. `status.md` is the
+  project's memory, not the chat's.
+- **There is exactly one approval gate** because there is exactly one
+  moment I actually make a decision: when the research comes back and
+  the direction is set. V1 gated three more times because the models
+  of its era could not be trusted between gates. These can.
+- **Tests are regression tooling, not a ritual.** Written with the
+  code, aimed at the plan's scenarios. The test-first phase was cut on
+  evidence, detailed in the obituary below.
 
 ## Usage
 
