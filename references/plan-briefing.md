@@ -10,10 +10,10 @@ research direction. Produce the formal plan the implementation will work
 from.
 
 **This document is written for the model, not the human.** The human
-approved its contents in conversation during Research and will not read
-this file. Write it for the reader it has: complete, concrete, free of
-ceremony, optimized to be re-read mid-implementation by an agent whose
-context has drifted.
+approved its contents in conversation during Research and will, at
+most, skim this file for direction and obvious problems. Write it for
+the reader it has: complete, concrete, free of ceremony, optimized to
+be re-read mid-implementation by an agent whose context has drifted.
 
 ## Context
 

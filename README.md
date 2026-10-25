@@ -19,8 +19,10 @@ The construction mirrors the practice at every level:
 
 - **The phases are the loop I actually run.** I state a high-level
   vision. The model goes and learns things and reports back; if the
-  direction sounds right, it writes the formal plan. I rarely read the
-  plan — I approved its contents in the research conversation, and the
+  direction sounds right, it writes the formal plan. I skim the plan
+  — a pass for direction and obvious problems, not twenty minutes
+  checking every code reference, and on small tickets I don't read it
+  at all. I approved its contents in the research conversation; the
   document exists as the model's reference, not my homework[^5]. It
   implements. I review for architecture, run the Thermos pass, and ask
   "why is it done this way?" until the answers stop being interesting.
@@ -56,9 +58,9 @@ The construction mirrors the practice at every level:
    gate in the workflow.
 2. **Plan.** The model writes the formal plan: architecture decisions,
    chunks, acceptance scenarios. It is written for the model, as its
-   working reference. You will probably never read it. That is the
-   design, not a defect — you already approved everything in it during
-   step 1.
+   working reference. You will skim it at most, and on small work not
+   at all. That is the design, not a defect — you already approved
+   everything in it during step 1.
 3. **Implementation.** Chunk by chunk, tests written with the code,
    commands run and recorded.
 4. **Review.** A fresh context that did not write the code reviews it
