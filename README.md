@@ -1,155 +1,80 @@
 # Synthitect
 
-A structured workflow for shipping features with AI coding tools. Synthitect
-runs a feature request through a fixed pipeline of specialized subagents:
-research, design, structure, plan, test-driven implementation, and review.
-Human gates sit where judgment matters. Every phase writes its artifact to
-disk, so work resumes across sessions and across tools.
+A workflow for shipping software with AI coding models, in five phases:
+vision, research, plan, implementation, review. The human supplies the
+vision and the architectural judgment. The model does everything else
+and brings receipts.
 
-## What it does
+**Version 2.0 — modernized for current frontier intelligence.**
 
-A feature request goes in. Reviewed, tested code comes out the other end,
-with the reasoning kept in files you can read.
+## Usage
 
-```text
-Research → Design → Structure → Plan → TDD Red → Red Review → Implement → Final Review
-              ↑          ↑         ↑
-         human gate  human gate  human gate
+```
+/synthitect [your high-level vision]
 ```
 
-**Alignment (before code).** Objective codebase research, a design discussion
-artifact, and a vertical-slice structure outline. Wrong patterns get caught
-in documents that take minutes to read, before they turn into a long plan
-built on them.
+1. **Research.** The model investigates the codebase and the facts,
+   then reports the findings and a proposed direction back to you, in
+   conversation. You approve, redirect, or kill it. This is the only
+   gate in the workflow.
+2. **Plan.** The model writes the formal plan: architecture decisions,
+   chunks, acceptance scenarios. It is written for the model, as its
+   working reference. You will probably never read it. That is the
+   design, not a defect — you already approved everything in it during
+   step 1.
+3. **Implementation.** Chunk by chunk, tests written with the code,
+   commands run and recorded.
+4. **Review.** A fresh context that did not write the code reviews it
+   against the plan and the project constitution, Thermos pass included
+   where one exists. Findings that question the architecture come back
+   to you as questions. Rounds are capped at three.
+5. **Ship.** Pull request, external reviewer, merge.
 
-**Planning.** `spec.md` holds the implementation contract. `test_spec.md`
-holds Gherkin scenarios with literal expected values, mutation defense
-included.
+Progress lives on disk in `plans/{ticket_id}/status.md`, so any session
+can pick the work up where the last one left off.
 
-**Execution.** Failing tests first, a review of the red phase's integrity,
-implementation to green, then a final evidence-backed review. Review loops
-rerun only for findings that matter (correctness, drift from the plan, weak
-coverage). Style nits do not loop.
+Install: copy `SKILL.md` and `references/` into your agent's skills
+directory.
 
-## Quick start
+## Version 1.0, an obituary
 
-### Install the skill
+V1 shipped in the era of stupid models. Its reference test subject was
+MiniMax M2.7, a model that could not hold a plan across twenty turns,
+wrote tests that faithfully encoded its own misunderstandings, and
+declared victory without running anything. V1 corrected those failure
+modes the only way available: eight phases, three human approval gates,
+a separate subagent for every concern, and a test-first inquisition
+with its own review loop. It worked. It was also exhausting, in the
+way that managing a talented but unreliable intern through a checklist
+is exhausting.
 
-Point your agent skills directory at this repo:
+The failure modes were real. The models were stupid. Both statements
+expired, at different rates.
 
-```bash
-ln -sfn /path/to/synthitect ~/.grok/skills/synthitect
-```
+Frontier models now hold the plan, do the research unprompted, and run
+the tests because the tests are there. What they still do is drift
+across long sessions, rationalize their own code in review, and cut
+corners on architecture in ways that only show up later. So V2 keeps
+exactly the parts of V1 that were never about model IQ:
 
-The same link works for Claude Code, Codex, or any runtime that loads skills
-from a path. The repo root is the skill: `SKILL.md` plus `references/`.
+- State on disk, because sessions are mortal even when models are not.
+- Independent review in a fresh context, because the producer of code
+  is the worst reviewer of it, at any intelligence level.
+- Evidence over adjectives, loop caps over infinite polish.
 
-### Start a ticket
+And it deletes the rest, including the test-first phase. Tests matter —
+they are how a codebase stays un-regressed. Writing them *first*, for a
+model, measurably does not matter: a 2026 study of frontier agents on
+real issue resolution (Chen et al., "Rethinking the Value of
+Agent-Generated Tests") found test-writing frequency had no significant
+effect on outcomes, and the TDAD evaluation found that TDD procedural
+instructions alone *increased* regressions. Scenario thinking did not
+die; it moved into the plan, where it always belonged.
 
-```text
-Use synthitect to plan out adding rate limiting to the API
-```
-
-or
-
-```text
-/synthitect add-api-rate-limiting
-```
-
-The agent creates `plans/add-api-rate-limiting/`, runs Research, then Design,
-and stops for your approval.
-
-### Approve and continue
-
-After reading `plans/{ticket_id}/design.md`:
-
-```text
-Design approved. Continue synthitect.
-```
-
-Same for Structure and Plan. After plan approval:
-
-```text
-Plan approved. Run the rest.
-```
-
-TDD Red through Final Review then runs with no further approvals, unless a
-review loop needs a correction only you can make.
-
-### Resume after switching tools
-
-```text
-Use synthitect to continue add-api-rate-limiting
-```
-
-The agent reads `plans/{ticket_id}/status.md` and the artifact files on disk
-and works out the next phase. No chat history required.
-
-## Artifacts per ticket
-
-```text
-plans/{ticket_id}/
-  ticket.md       # captured request
-  status.md       # phase checklist, gates, loop counts; the resume anchor
-  research.md     # objective codebase map (questions + findings)
-  design.md       # current and target state, patterns, decisions
-  structure.md    # vertical slices, checkpoints, file map preview
-  spec.md         # tactical implementation plan
-  test_spec.md    # Gherkin behavioral contract
-```
-
-`status.md` is the checklist. Subagents update it as phases complete. You, or
-the orchestrator, record approvals there.
-
-## Human gates
-
-| Gate | What you review | Typical time |
-| --- | --- | --- |
-| Design | Patterns, decisions, open questions | 5 to 10 min |
-| Structure | Vertical slice order, checkpoints | 5 min |
-| Plan | Tasks, scenarios, contracts | 10 to 20 min |
-
-Research has no gate. It is facts only. Post-plan phases use automated review
-loops (max 3 passes each) instead of human approval.
-
-## Triggers cheat sheet
-
-| Intent | Example |
-| --- | --- |
-| Start fresh | `Use synthitect to plan out X` |
-| Named ticket | `/synthitect my-ticket-slug` |
-| Resume | `Use synthitect to continue my-ticket-slug` |
-| Approve | `Design approved. Continue synthitect.` |
-| Redirect | `Reject design. Use the EventBus pattern from src/foo, not the legacy handler. Revise.` |
-| Autopilot after plan | `Plan approved. Run the rest.` |
-
-## After a long design discussion
-
-Your conversation still works as input. Wrap up with:
-
-```text
-Use synthitect to plan this out now. Ticket: websocket-reconnect
-```
-
-Synthitect captures the request into `ticket.md`, then runs objective
-research before design, so the fact-finding phase stays free of solutions
-nobody has checked yet.
-
-## Repository layout
-
-| Path | Holds |
-| --- | --- |
-| `SKILL.md` | Orchestrator instructions |
-| `references/` | Subagent briefings, one per phase |
-| `plans/` | Per-ticket artifacts (in the project you work on) |
-
-## Requirements
-
-- An agent runtime with subagent/delegation support. Without it, Synthitect
-  cannot run phases and will say so, rather than pasting briefings into chat.
-- A project `CLAUDE.md` or `AGENTS.md` constitution file for subagents to
-  read.
+V1 is preserved under `legacy/` and at the `v1.0` tag. It is a museum
+now. It earned it.
 
 ## License
 
-0BSD license. Do whatever you want with the code. Just don't expect it to work or sue me.
+0BSD license. Do whatever you want with the code. Just don't expect it
+to work or sue me.

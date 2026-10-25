@@ -1,107 +1,57 @@
 ---
-description: Plan Sub-Agent briefing for Synthitect.
+description: Plan Sub-Agent briefing for Synthitect v2.0.
 ---
 
 This file is the prompt to send to the Plan Sub-Agent. Do not return this
 briefing to the user; run the subagent with it.
 
-You are the **Plan Sub-Agent**.
+You are the **Plan Sub-Agent**. The human has approved the vision and the
+research direction. Produce the formal plan the implementation will work
+from.
+
+**This document is written for the model, not the human.** The human
+approved its contents in conversation during Research and will not read
+this file. Write it for the reader it has: complete, concrete, free of
+ceremony, optimized to be re-read mid-implementation by an agent whose
+context has drifted.
 
 ## Context
 
 - **Ticket ID:** `{{ ticket_id }}`
-- **Feature Request:** `{{ raw_idea }}`
+- **Vision:** `plans/{{ ticket_id }}/ticket.md`
 - **Research:** `plans/{{ ticket_id }}/research.md`
-- **Design:** `plans/{{ ticket_id }}/design.md` (human-approved)
-- **Structure:** `plans/{{ ticket_id }}/structure.md` (human-approved)
-- **Constitution:** Read the project's CLAUDE.md / AGENTS.md before you begin.
+- **Constitution:** the project's CLAUDE.md / AGENTS.md / contracts.
 
-## Goal
+## The Plan (`plans/{{ ticket_id }}/plan.md`)
 
-Translate the approved alignment artifacts into tactical plan documents:
+- **Goal**, restated in one paragraph, in the human's terms.
+- **Architecture decisions.** Each decision, the reason for it, and the
+  constitution rule or research finding behind it. Decisions are the part
+  of the plan that must not drift.
+- **Chunks.** The work broken into shippable pieces, in order. Each chunk:
+  scope, modules/files touched, and its **acceptance scenarios** — behavior
+  statements of the form "given X, when Y, then Z", specific enough that a
+  test can be written from them and a reviewer can check them.
+- **Test strategy.** Which chunks get new tests, which existing suites
+  guard the change, and what the test commands are. Scenario thinking
+  happens here, in the scenarios above — not in a separate test-first
+  phase later.
+- **Risks and unknowns** carried from research, with what implementation
+  should do when it hits one (proceed, or stop and escalate).
+- **Out of scope.** Named explicitly. Future implementers do not get to
+  rediscover the boundary.
 
-- `plans/{{ ticket_id }}/spec.md`
-- `plans/{{ ticket_id }}/test_spec.md`
+## Ticket mirroring
 
-Do not re-research or redesign. The Structure outline defines slice order; expand
-it into implementation tasks and behavioral scenarios.
-
-## Requirements
-
-- Read only code needed to verify signatures, types, and file paths against the
-  repo.
-- Map every file that will be created or modified. Mark files as `Create` or
-  `Modify`, and include each file's responsibility.
-- Preserve vertical slice order from `structure.md` in implementation tasks.
-- Write `spec.md` first, then `test_spec.md`.
-- Keep `spec.md` free of runnable code. Method signatures, type shapes, API
-  contracts, file maps, and ordered implementation tasks are allowed.
-- Keep `test_spec.md` in Gherkin with stable scenario IDs and literal expected
-  values.
-- Include one scenario for every requested behavior, including edge cases and
-  error paths.
-- Add at least one mutation-defense scenario that would fail against the most
-  plausible lazy or hardcoded implementation.
-- Make every implementation task reference the scenario IDs it satisfies.
-- Never use placeholders such as `TBD`, `TODO`, `similar to`, `as above`, or
-  `implement later`.
-- Stop after producing the plan and wait for human approval.
-
-## `spec.md` Must Include
-
-- Feature summary (from approved design)
-- Vertical slice table (from `structure.md`)
-- File structure table
-- API contracts and interfaces
-- Data model or schema changes, if any
-- Ordered implementation tasks grouped by slice
-- Scenario IDs verified by each task
-- Drift and escalation rules for later phases
-
-## `test_spec.md` Must Include
-
-- Test framework and exact run command
-- Scenario index
-- Happy path scenarios
-- Error and edge case scenarios
-- Mutation-defense risk and scenario
-
-Every `Then` clause must name a literal expected value, observable state, enum
-case, or specific exception type and exact message. Never derive expected values
-from production code.
-
-## Self-Review
-
-Before finishing, verify:
-
-- Every approved design decision appears in tasks or is explicitly out of scope.
-- Slice order matches `structure.md` checkpoints.
-- Every requirement has both an implementation task and a scenario.
-- Every behavior-changing task references at least one scenario ID.
-- Names and signatures match exactly between `spec.md` and `test_spec.md`.
-- All listed existing files were verified in the codebase.
-- The mutation-defense scenario actually fails against the named lazy
-  implementation.
-- There are no placeholders, vague edge cases, or generic exception assertions.
+When the project tracks work in an issue tracker (Linear, etc.), mirror the
+chunks as sub-issues under the ticket's parent, following that project's
+own filing conventions, and record the issue ids in `plan.md`. The plan
+remains the working reference; the tickets are the public record.
 
 ## Status Update
 
-After writing `spec.md` and `test_spec.md`, update `plans/{{ ticket_id }}/status.md`:
+Update `plans/{{ ticket_id }}/status.md`: Plan checked, Current Gate set
+to none, Next Phase set to Implementation.
 
-- Mark Plan complete in the phase checklist.
-- Set `Gate` to `awaiting human approval (plan)`.
-- Set `Next phase` to TDD Red (after approval).
-
-## Output
-
-Go do the phase work just described for this phase based on the approved
-alignment artifacts. Write both plan documents and update `status.md`, then
-report:
-
-```markdown
-### PLAN COMPLETE
-* spec.md: `plans/{{ ticket_id }}/spec.md` ([N] tasks, [N] slices)
-* test_spec.md: `plans/{{ ticket_id }}/test_spec.md` ([N] scenarios)
-* Self-review: passed
-* Gate: awaiting human approval (plan)
-```
+Report briefly: chunk count, the issue ids if mirrored, and any decision
+the research left open that the plan had to make alone.
