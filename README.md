@@ -1,10 +1,6 @@
 # Synthitect
 
-Synthitect is one engineer's habits for coding with agents, written
-down as a skill. It claims no authority. It is the way Sean Brown
-happens to work, formalized so an agent can run the same loop he runs
-by hand. Take what survives contact with your own projects and leave
-the rest.
+Synthitect is a formalization of how I normally code with agents.
 
 It has two layers. The bottom layer is agent engineering: one
 frontier model plans and reviews, smaller workhorse models run the
