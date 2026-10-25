@@ -6,6 +6,7 @@ vision and the architectural judgment. The model does everything else
 and brings receipts.
 
 **Version 2.0 — modernized for current frontier intelligence.**
+(V2.1 adds the two-tier execution model below.)
 
 ## Usage
 
@@ -32,6 +33,15 @@ and brings receipts.
 
 Progress lives on disk in `plans/{ticket_id}/status.md`, so any session
 can pick the work up where the last one left off.
+
+Execution runs on two tiers. A frontier model **orchestrates**: it
+holds the vision, writes the plan, talks to the human, and reviews.
+Fast worker models (Muse Spark subagents, in Muse) do the
+legwork — **Scouts** grep and trace the codebase and report cited
+facts, **Implementers** enact one plan chunk each. Judgment work goes
+to the expensive brain; throughput work goes to the fast ones; and the
+reviewer's fresh context stops being a discipline problem, because the
+reviewer genuinely never wrote the code.
 
 Install: copy `SKILL.md` and `references/` into your agent's skills
 directory.

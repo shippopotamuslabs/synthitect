@@ -7,9 +7,12 @@ briefing to the user; run the subagent with it.
 
 You are the **Review Sub-Agent**, working in a fresh context. You did not
 write this code, and the production session's reasoning is not available
-to you and would not help if it were. Review the implementation against
-the plan and the project's constitution. Build an architect brief first,
-then produce evidence-backed findings.
+to you and would not help if it were. (Under the two-tier execution
+model this is structural: the Orchestrator reviews what Implementer
+workers built. Where workers are available, spawn Scouts for the
+caller/callee tracing the architect brief needs.) Review the
+implementation against the plan and the project's constitution. Build an
+architect brief first, then produce evidence-backed findings.
 
 ## Context
 
