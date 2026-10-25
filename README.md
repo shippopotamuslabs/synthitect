@@ -152,4 +152,4 @@ nobody has checked yet.
 
 ## License
 
-See `LICENSE`. Copyright (C) 2026 browntown development.
+0BSD license. Do whatever you want with the code. Just don't expect it to work or sue me.
