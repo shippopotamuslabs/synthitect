@@ -1,7 +1,7 @@
 ---
 name: synthitect
 description: >-
-  The Synthitect workflow, v2.2: vision intake, research, a formal plan
+  The Synthitect workflow, v2.3: vision intake, research, a formal plan
   artifact, implementation, a fresh-context architectural review loop, and
   ship via pull request with an external reviewer. Two-tier execution: a
   frontier-model orchestrator plans and reviews while fast worker models
@@ -9,7 +9,7 @@ description: >-
   across sessions via plans/{ticket_id}/status.md.
 ---
 
-# Synthitect v2.2
+# Synthitect v2.3
 
 Use this skill when the user invokes `/synthitect` or asks for work to run
 through the Synthitect workflow.
@@ -56,15 +56,14 @@ evidence. Neither side does the other's job.
    human's call.
 8. **Questions go through the harness's question tool.** Whenever the
    workflow needs the human's answer — the vision conversation, an
-   architecture escalation, a gate — surface the question through the
-   harness's native question-surfacing mechanism where one exists (the
-   structured question tool the runtime provides), not as prose buried in
-   a report where it can be scrolled past. Ask open questions: name what
-   is undecided and what each answer changes, and let the human answer in
-   their own words rather than picking from a menu the model invented.
-   Where the harness has no question tool, ask in chat with the same
-   visibility: a short, clearly marked list, never folded into a findings
-   dump.
+   architecture escalation, a gate — ask through the harness's native
+   question-surfacing tool where one exists, in its standard shape: a
+   short numbered list of concrete options, the option the model
+   recommends first and marked "(recommended)", and a final "Other"
+   option where the human types their own answer. State each option
+   plainly, with what it commits to. Never bury a question in report
+   prose and leave the human to dig it out. Where the harness has no
+   question tool, reproduce the same numbered format in chat.
 
 ## Execution Model: Orchestrator and Workers
 

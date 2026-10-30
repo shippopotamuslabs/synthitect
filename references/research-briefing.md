@@ -57,8 +57,9 @@ Then update `plans/{{ ticket_id }}/status.md`: Current Gate set to
 
 The report is the record; it is not the surfacing. Where the harness
 provides a native question tool, put the open questions to the human
-through it as well (SKILL.md, Core Rule 8) — asked open, so the human
-answers in their own words.
+through it as well (SKILL.md, Core Rule 8): concrete options, the
+recommendation first and marked "(recommended)", and an "Other" option
+where the human types their own answer.
 
 The report opens the discussion; it rarely ends it. Work the human's
 replies: answer, dig further where the discussion exposes a gap, and
