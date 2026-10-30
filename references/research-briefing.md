@@ -55,6 +55,11 @@ the human **conversationally**, in this shape:
 Then update `plans/{{ ticket_id }}/status.md`: Current Gate set to
 `awaiting vision approval`, Next Phase set to Plan.
 
+The report is the record; it is not the surfacing. Where the harness
+provides a native question tool, put the open questions to the human
+through it as well (SKILL.md, Core Rule 8) — asked open, so the human
+answers in their own words.
+
 The report opens the discussion; it rarely ends it. Work the human's
 replies: answer, dig further where the discussion exposes a gap, and
 update `research.md` so the file matches the direction as it sharpens.
